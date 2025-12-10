@@ -188,7 +188,6 @@ class PersonnelService {
         .lean(),
       PersonnelModel.countDocuments(query)
     ]);
-
     //     await cache.set(cacheKey, personnel, CACHE_TTL.MEDIUM);
     return personnel
 
@@ -427,10 +426,14 @@ class PersonnelService {
     const PrescriptionModel = (await import('#modules/prescription/prescription.model.js')).default;
     const HealthExaminationModel = (await import('#modules/health-examination-record/health-examination.model.js')).default;
     const ChiefComplaintModel = (await import('#modules/chief-complaint/chief-complaint.model.js')).default;
+    const DentalTreatmentRecordModel = (await import('#modules/dental-treatment-record/dental-treatment-record.model.js')).default;
+    const DentalRecordChartModel = (await import('#modules/dental-record-chart/dental-record-chart.model.js')).default;
 
     // Fetch all records in parallel
     const [
       healthCards,
+      dentalTreatments,
+      dentalRecordCharts,
       dailyTreatments,
       prescriptions,
       healthExaminations,
@@ -445,6 +448,26 @@ class PersonnelService {
         .sort({ createdAt: -1 })
         .lean(),
 
+      // Dental Treatment Records
+      DentalTreatmentRecordModel.find({
+        personnel: personnel._id,
+        isDeleted: false
+      })
+        .populate('attendedBy', 'firstName lastName role')
+        .populate('lastModifiedBy', 'firstName lastName role')
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      // Dental Record Charts
+      DentalRecordChartModel.find({
+        personnel: personnel._id,
+        isDeleted: false
+      })
+        .populate('attendedBy', 'firstName lastName role')
+        .populate('lastModifiedBy', 'firstName lastName role')
+        .sort({ dateOfExamination: -1 })
+        .lean(),
+
       // Daily Treatment Records
       DailyTreatmentRecordModel.find({
         personnel: personnel._id,
@@ -457,7 +480,10 @@ class PersonnelService {
 
       // Prescriptions
       PrescriptionModel.find({
-        patientName: `${personnel.firstName} ${personnel.lastName}`,
+        patientName: {
+          $regex: `${personnel.firstName}.*${personnel.lastName}`,
+          $options: 'i'
+        },
         isDeleted: false
       })
         .populate('prescribedBy', 'firstName lastName role')
@@ -510,6 +536,39 @@ class PersonnelService {
           maleExamination: record.maleExamination
         },
         treatment: record.treatment,
+        remarks: record.remarks,
+        recordId: record._id,
+        details: record
+      });
+    });
+
+    // Add dental treatments to timeline
+    dentalTreatments.forEach(record => {
+      if (record.treatments && Array.isArray(record.treatments)) {
+        record.treatments.forEach(treatment => {
+          timeline.push({
+            type: 'Dental Treatment',
+            date: treatment.dateOfService || record.createdAt,
+            provider: record.attendedBy ? `${record.attendedBy.firstName} ${record.attendedBy.lastName}` : 'Unknown',
+            procedure: treatment.procedure,
+            toothNumber: treatment.toothNo,
+            amountCharged: treatment.amountCharged,
+            recordId: record._id,
+            details: treatment
+          });
+        });
+      }
+    });
+
+    // Add dental record charts to timeline
+    dentalRecordCharts.forEach(record => {
+      timeline.push({
+        type: 'Dental Record Chart',
+        date: record.dateOfExamination || record.createdAt,
+        provider: record.attendedBy ? `${record.attendedBy.firstName} ${record.attendedBy.lastName}` : 'Unknown',
+        permanentTeeth: record.permanentTeeth?.length || 0,
+        temporaryTeeth: record.temporaryTeeth?.length || 0,
+        periodontalScreening: record.periodontalScreening,
         remarks: record.remarks,
         recordId: record._id,
         details: record
@@ -596,6 +655,8 @@ class PersonnelService {
       summary: {
         totalRecords: timeline.length,
         healthCards: healthCards.length,
+        dentalTreatments: dentalTreatments.length,
+        dentalRecordCharts: dentalRecordCharts.length,
         dailyTreatments: dailyTreatments.length,
         prescriptions: prescriptions.length,
         healthExaminations: healthExaminations.length,
@@ -605,6 +666,8 @@ class PersonnelService {
       },
       records: {
         healthCards,
+        dentalTreatments,
+        dentalRecordCharts,
         dailyTreatments,
         prescriptions,
         healthExaminations,

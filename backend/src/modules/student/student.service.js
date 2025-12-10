@@ -284,7 +284,7 @@ class StudentService {
     const [students, total] = await Promise.all([
       StudentModel.find(searchQuery)
         .select('firstName middleName lastName stdId gradeLevel section schoolName birthDate gender attendingPersonnel')
-        .populate('attendingPersonnel','firstName lastName schoolName schoolDistrictDivision')
+        .populate('attendingPersonnel', 'firstName lastName schoolName schoolDistrictDivision')
         .sort({ lastName: 1, firstName: 1 })
         .skip(skip)
         .limit(limit)
@@ -431,15 +431,15 @@ class StudentService {
       throw new ApiError(`Student with ID ${stdId} not found`, StatusCodes.NOT_FOUND);
     }
 
-
     const DentalTreatmentRecordModel = (await import('#modules/dental-treatment-record/dental-treatment-record.model.js')).default;
+    const DentalRecordChartModel = (await import('#modules/dental-record-chart/dental-record-chart.model.js')).default;
     const HealthExaminationModel = (await import('#modules/health-examination-record/health-examination.model.js')).default;
     const ChiefComplaintModel = (await import('#modules/chief-complaint/chief-complaint.model.js')).default;
 
-    // Fetch all records in parallel
     const [
       schoolHealthExams,
       dentalTreatments,
+      dentalRecordCharts,
       dailyTreatments,
       prescriptions,
       healthExaminations,
@@ -465,6 +465,16 @@ class StudentService {
         .sort({ createdAt: -1 })
         .lean(),
 
+      // Dental Record Charts
+      DentalRecordChartModel.find({
+        student: student._id,
+        isDeleted: false
+      })
+        .populate('attendedBy', 'firstName lastName role')
+        .populate('lastModifiedBy', 'firstName lastName role')
+        .sort({ dateOfExamination: -1 })
+        .lean(),
+
       // Daily Treatment Records
       DailyTreatmentRecordModel.find({
         student: student._id,
@@ -477,7 +487,10 @@ class StudentService {
 
       // Prescriptions
       PrescriptionModel.find({
-        patientName: `${student.firstName} ${student.lastName}`,
+        patientName: {
+          $regex: `${student.firstName}.*${student.lastName}`,
+          $options: 'i'
+        },
         isDeleted: false
       })
         .populate('prescribedBy', 'firstName lastName role')
@@ -526,9 +539,7 @@ class StudentService {
       });
     });
 
-    // Add dental treatments to timeline
     dentalTreatments.forEach(record => {
-      // Dental records have treatments array
       if (record.treatments && Array.isArray(record.treatments)) {
         record.treatments.forEach(treatment => {
           timeline.push({
@@ -545,6 +556,21 @@ class StudentService {
       }
     });
 
+    // Add dental record charts to timeline
+    dentalRecordCharts.forEach(record => {
+      timeline.push({
+        type: 'Dental Record Chart',
+        date: record.dateOfExamination || record.createdAt,
+        provider: record.attendedBy ? `${record.attendedBy.firstName} ${record.attendedBy.lastName}` : 'Unknown',
+        permanentTeeth: record.permanentTeeth?.length || 0,
+        temporaryTeeth: record.temporaryTeeth?.length || 0,
+        periodontalScreening: record.periodontalScreening,
+        remarks: record.remarks,
+        recordId: record._id,
+        details: record
+      });
+    });
+
     // Add daily treatments to timeline
     dailyTreatments.forEach(record => {
       timeline.push({
@@ -559,7 +585,6 @@ class StudentService {
       });
     });
 
-    // Add prescriptions to timeline
     prescriptions.forEach(record => {
       timeline.push({
         type: 'Prescription',
@@ -572,7 +597,6 @@ class StudentService {
       });
     });
 
-    // Add health examinations to timeline
     healthExaminations.forEach(record => {
       const physicianName = record.exam?.physician?.userId
         ? `${record.exam.physician.userId.firstName} ${record.exam.physician.userId.lastName}`
@@ -590,7 +614,6 @@ class StudentService {
       });
     });
 
-    // Add chief complaints to timeline
     chiefComplaints.forEach(record => {
       timeline.push({
         type: 'Chief Complaint',
@@ -605,9 +628,7 @@ class StudentService {
       });
     });
 
-    // Sort timeline by date (most recent first)
     timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
-
     return {
       student: {
         stdId: student.stdId,
@@ -626,6 +647,7 @@ class StudentService {
         totalRecords: timeline.length,
         schoolHealthExams: schoolHealthExams.length,
         dentalTreatments: dentalTreatments.length,
+        dentalRecordCharts: dentalRecordCharts.length,
         dailyTreatments: dailyTreatments.length,
         prescriptions: prescriptions.length,
         healthExaminations: healthExaminations.length,
@@ -636,6 +658,7 @@ class StudentService {
       records: {
         schoolHealthExams,
         dentalTreatments,
+        dentalRecordCharts,
         dailyTreatments,
         prescriptions,
         healthExaminations,

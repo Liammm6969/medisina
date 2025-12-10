@@ -21,13 +21,13 @@ const medicationSchema = Joi.object({
 });
 
 export const createPrescriptionSchema = Joi.object({
-  patientName: Joi.string().trim().allow('').optional(),
+  patientName: Joi.string().trim().replace(/[`'"]/g, '').allow('').optional(),
   patientAge: Joi.alternatives().try(
     Joi.number().min(0).max(120),
     Joi.string().allow('').valid('')
   ).optional(),
   patientSex: Joi.string().valid('Male', 'Female').allow('').optional(),
-  patientAddress: Joi.string().trim().allow('').optional(),
+  patientAddress: Joi.string().trim().replace(/[`'"]/g, '').allow('').optional(),
   classification: Joi.string().trim().allow('').optional(),
   medications: Joi.array().items(medicationSchema).min(1).required(),
   notes: Joi.string().trim().allow('').optional(),

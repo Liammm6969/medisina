@@ -79,7 +79,11 @@ class PrescriptionService {
     if (attendingExaminer) query.attendingExaminer = attendingExaminer;
 
     if (patientName) {
-      query.patientName = { $regex: patientName, $options: 'i' };
+      const cleanName = patientName.replace(/[`'".,]/g, '').trim();
+      const nameWords = cleanName.split(/\s+/).filter(word => word.length > 0);
+
+      const regexPattern = nameWords.map(word => `(?=.*${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`).join('');
+      query.patientName = { $regex: regexPattern, $options: 'i' };
     }
 
     if (startDate || endDate) {
@@ -120,7 +124,11 @@ class PrescriptionService {
     if (prescribedBy) query.prescribedBy = prescribedBy;
 
     if (patientName) {
-      query.patientName = { $regex: patientName, $options: 'i' };
+      const cleanName = patientName.replace(/[`'".,]/g, '').trim();
+      const nameWords = cleanName.split(/\s+/).filter(word => word.length > 0);
+
+      const regexPattern = nameWords.map(word => `(?=.*${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`).join('');
+      query.patientName = { $regex: regexPattern, $options: 'i' };
     }
 
     if (startDate || endDate) {
