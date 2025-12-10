@@ -37,7 +37,7 @@ const deleteOldAuditTrails = async () => {
 export const ping = () => {
 
 
-  const URL = "https://medisina-1aja.onrender.com/";
+  const URL = "https://medisina-da3o.onrender.com/health";
 
   cron.schedule("*/5 * * * *", async () => {
     try {
