@@ -39,7 +39,7 @@ export const ping = () => {
 
   const URL = "https://medisina-da3o.onrender.com/health";
 
-  cron.schedule("*/10 * * * *", async () => {
+  cron.schedule("*/15 * * * *", async () => {
     try {
       await fetch(URL);
       logger.info("Pinged self to stay awake");
