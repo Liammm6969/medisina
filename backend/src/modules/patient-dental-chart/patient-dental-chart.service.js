@@ -45,6 +45,8 @@ class PatientDentalChartService {
 
     const records = await PatientDentalChart.find(query)
       .populate([
+        { path: 'student', select: 'firstName lastName middleName stdId age sex birthdate address contactNo' },
+        { path: 'personnel', select: 'firstName lastName middleName perId age sex birthdate address contactNo' },
         { path: 'attendedBy', select: 'firstName lastName role' }
       ])
       .sort({ createdAt: -1 });

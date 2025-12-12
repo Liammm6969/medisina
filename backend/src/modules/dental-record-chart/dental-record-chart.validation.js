@@ -3,8 +3,8 @@ import { objectId } from '#utils/customValidation.js';
 
 const teethConditionSchema = Joi.object({
   toothNumber: Joi.string().trim().required(),
-  status: Joi.string().valid('Present', 'Decayed', 'Missing', 'Impacted', 'Supernumerary', 'Root Fragment', 'Unerupted').default('Present'),
-  condition: Joi.string().trim().allow('', null),
+  condition: Joi.string().valid('Present', 'Decayed', 'Missing', 'Impacted', 'Supernumerary', 'Root Fragment', 'Unerupted').default('Present'),
+  secondaryCondition: Joi.string().valid('Present', 'Decayed', 'Missing', 'Impacted', 'Supernumerary', 'Root Fragment', 'Unerupted').default('Present'),
   restoration: Joi.string().trim().allow('', null),
   surgery: Joi.string().trim().allow('', null),
   notes: Joi.string().trim().allow('', null)

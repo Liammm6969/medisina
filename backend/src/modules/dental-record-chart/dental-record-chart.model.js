@@ -2,22 +2,26 @@ import mongoose from "mongoose";
 import { generateId } from "#utils/crypto.js";
 
 const TeethConditionSchema = new mongoose.Schema({
-  toothNumber: { type: String, required: true }, 
-  status: {
+  toothNumber: { type: String, required: true },
+
+  condition: {
     type: String,
-    enum: ['Present', 'Decayed', 'Missing', 'Impacted', 'Supernumerary', 'Root Fragment', 'Unerupted'],
+    enum: ['Present', 'Decayed', 'Missing', 'Impacted', 'Supernumerary', 'Root Fragment', 'Unerupted', 'Missing Other Causes'],
     default: 'Present'
   },
-  condition: { type: String, trim: true }, 
-  restoration: { type: String, trim: true }, 
-  surgery: { type: String, trim: true }, 
+  secondaryCondition: {
+    type: String,
+    enum: ['Present', 'Decayed', 'Missing', 'Impacted', 'Supernumerary', 'Root Fragment', 'Unerupted', 'Missing Other Causes'],
+    default: 'Present'
+  },
+  restoration: { type: String, trim: true },
+  surgery: { type: String, trim: true },
   notes: { type: String, trim: true }
 }, { _id: false });
 
 const DentalRecordChartSchema = new mongoose.Schema({
   drcId: { type: String, unique: true, index: true },
 
-  // Patient Reference - Either student, personnel, or walk-in
   student: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
   personnel: { type: mongoose.Schema.Types.ObjectId, ref: "Personnel" },
 
@@ -39,7 +43,7 @@ const DentalRecordChartSchema = new mongoose.Schema({
   },
 
   occlusion: {
-    classMolar: { type: String, trim: true }, 
+    classMolar: { type: String, trim: true },
     overjet: { type: String, trim: true },
     overbite: { type: String, trim: true },
     midlineDeviation: { type: String, trim: true },

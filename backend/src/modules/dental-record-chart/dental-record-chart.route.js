@@ -8,6 +8,8 @@ const router = express.Router();
 
 router.get('/stats', auth('Doctor', 'Nurse', 'Admin'), dentalRecordChartController.getDashboardStats);
 
+router.get('/export', auth('Doctor', 'Nurse', 'Admin'), dentalRecordChartController.exportDentalRecordsToExcel);
+
 router.get('/patient/:patientId', auth('Doctor', 'Nurse', 'Admin'), validate(dentalRecordChartValidation.getRecordsByPatient), dentalRecordChartController.getRecordsByPatient);
 
 router.get('/', auth('Doctor', 'Nurse', 'Admin'), dentalRecordChartController.getAllRecords);

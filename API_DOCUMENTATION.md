@@ -16,6 +16,7 @@
   - [Students](#students)
   - [Notifications](#notifications)
   - [Audit Trail](#audit-trail)
+  - [Dental Record Chart](#dental-record-chart)
 - [Error Handling](#error-handling)
 - [Rate Limiting](#rate-limiting)
 
@@ -890,6 +891,105 @@ The notification system allows sending targeted messages to users with different
 - **Description**: Delete all audit trail records
 - **Authentication**: Admin only
 - **Response**: `200 OK` with confirmation message
+
+### Dental Record Chart
+
+#### GET /dental-record-chart
+
+- **Description**: Get all dental record charts
+- **Authentication**: Doctor, Nurse, Admin
+- **Response**: `200 OK` with array of dental records
+
+#### GET /dental-record-chart/:id
+
+- **Description**: Get a specific dental record chart by ID
+- **Authentication**: Doctor, Nurse, Admin
+- **Parameters**:
+  - `id`: Dental record chart ID (drcId or MongoDB \_id)
+- **Response**: `200 OK` with dental record object
+
+#### GET /dental-record-chart/patient/:patientId
+
+- **Description**: Get all dental records for a specific patient
+- **Authentication**: Doctor, Nurse, Admin
+- **Parameters**:
+  - `patientId`: Patient ID (student or personnel)
+- **Query Parameters**:
+  - `patientType`: Required - 'student' or 'personnel'
+- **Response**: `200 OK` with array of dental records
+
+#### GET /dental-record-chart/export
+
+- **Description**: Export dental record charts to Excel file
+- **Authentication**: Doctor, Nurse, Admin
+- **Query Parameters**:
+  - `patientId` (optional): Filter by specific patient ID
+  - `patientType` (optional): 'student' or 'personnel' (required if patientId provided)
+  - `startDate` (optional): Filter records from this date (YYYY-MM-DD)
+  - `endDate` (optional): Filter records until this date (YYYY-MM-DD)
+- **Response**: `200 OK` with Excel file download
+- **Example Usage**:
+  ```
+  GET /dental-record-chart/export
+  GET /dental-record-chart/export?patientId=507f1f77bcf86cd799439011&patientType=student
+  GET /dental-record-chart/export?startDate=2025-01-01&endDate=2025-12-31
+  ```
+
+#### POST /dental-record-chart
+
+- **Description**: Create a new dental record chart
+- **Authentication**: Doctor, Nurse, Admin
+- **Request Body**:
+  ```json
+  {
+  	"student": "507f1f77bcf86cd799439011",
+  	"permanentTeeth": [
+  		{
+  			"toothNumber": "11",
+  			"status": "Decayed",
+  			"condition": "Cavity",
+  			"notes": "Requires filling"
+  		}
+  	],
+  	"periodontalScreening": {
+  		"gingivitis": false,
+  		"earlyPeriodontitis": false
+  	},
+  	"occlusion": {
+  		"classMolar": "Class I",
+  		"overjet": "Normal"
+  	},
+  	"dateOfExamination": "2025-12-12",
+  	"remarks": "Regular checkup"
+  }
+  ```
+- **Response**: `201 Created` with dental record object
+
+#### PUT /dental-record-chart/:id
+
+- **Description**: Update an existing dental record chart
+- **Authentication**: Doctor, Nurse, Admin
+- **Parameters**:
+  - `id`: Dental record chart ID
+- **Request Body**: Same as POST (partial updates allowed)
+- **Response**: `200 OK` with updated dental record object
+
+#### DELETE /dental-record-chart/:id
+
+- **Description**: Delete a dental record chart (soft delete)
+- **Authentication**: Doctor, Nurse, Admin
+- **Parameters**:
+  - `id`: Dental record chart ID
+- **Response**: `200 OK` with confirmation message
+
+#### GET /dental-record-chart/stats
+
+- **Description**: Get dashboard statistics for dental records
+- **Authentication**: Doctor, Nurse, Admin
+- **Query Parameters**:
+  - `startDate` (optional): Filter from this date
+  - `endDate` (optional): Filter until this date
+- **Response**: `200 OK` with statistics object
 
 ## Error Handling
 

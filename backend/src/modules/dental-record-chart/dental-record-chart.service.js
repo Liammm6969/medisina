@@ -10,8 +10,8 @@ class DentalRecordChartService {
   async getAllRecords() {
     const records = await DentalRecordChart.find({ isDeleted: false })
       .populate([
-        { 
-          path: 'student', 
+        {
+          path: 'student',
           select: 'firstName lastName stdId schoolName gradeLevel attendingPersonnel',
           populate: { path: 'attendingPersonnel', select: 'firstName lastName schoolDistrictDivision' }
         },
@@ -56,12 +56,13 @@ class DentalRecordChartService {
 
     const records = await DentalRecordChart.find(query)
       .populate([
+        { path: 'student', select: 'firstName lastName schoolName' },
+        { path: 'personnel', select: 'firstName lastName schoolName' },
         { path: 'attendedBy', select: 'firstName lastName role' },
         { path: 'lastModifiedBy', select: 'firstName lastName role' }
       ])
       .sort({ dateOfExamination: -1 })
       .lean();
-
     return records;
   }
 
@@ -193,13 +194,36 @@ class DentalRecordChartService {
           _id: null,
           totalRecords: { $sum: 1 },
           studentRecords: {
-            $sum: { $cond: [{ $ne: ['$student', null] }, 1, 0] }
+            $sum: {
+              $cond: [
+                { $ifNull: ['$student', false] },
+                1,
+                0
+              ]
+            }
           },
           personnelRecords: {
-            $sum: { $cond: [{ $ne: ['$personnel', null] }, 1, 0] }
+            $sum: {
+              $cond: [
+                { $ifNull: ['$personnel', false] },
+                1,
+                0
+              ]
+            }
           },
           walkInRecords: {
-            $sum: { $cond: [{ $ne: ['$walkInPatient.name', null] }, 1, 0] }
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $ifNull: ['$walkInPatient.name', false] },
+                    { $ne: ['$walkInPatient.name', ''] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
           }
         }
       }
