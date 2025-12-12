@@ -170,3 +170,15 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     message: 'Dashboard statistics retrieved successfully'
   });
 });
+
+export const exportToPDF = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const pdfBuffer = await dentalTreatmentService.exportToPDF(id);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename=dental-treatment-record-${id}.pdf`);
+  res.setHeader('Content-Length', pdfBuffer.length);
+
+  return res.send(pdfBuffer);
+});

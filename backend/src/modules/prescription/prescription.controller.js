@@ -181,7 +181,7 @@ export const exportPrescriptionPdf = asyncHandler(async (req, res) => {
     });
   }
 
-  const verticalLines = [margin + 8, col2X - 3, col3X - 3, col4X - 3, width - margin - 8];
+  const verticalLines = [margin + 8, col2X - 40, col3X - 3, col4X - 3, width - margin - 8];
   verticalLines.forEach(x => {
     page.drawLine({
       start: { x, y: tableStartY },
@@ -191,15 +191,15 @@ export const exportPrescriptionPdf = asyncHandler(async (req, res) => {
     });
   });
 
-  page.drawText('NAME OF PATIENT', { x: col1X, y: tableStartY - 11, size: 8, font: fontBold });
-  page.drawText(prescription.patientName || '', { x: col2X, y: tableStartY - 11, size: 8, font });
+  page.drawText('NAME', { x: col1X, y: tableStartY - 11, size: 8, font: fontBold });
+  page.drawText(prescription.patientName || '', { x: col2X - 40, y: tableStartY - 11, size: 8, font });
   page.drawText('DATE', { x: col3X, y: tableStartY - 11, size: 8, font: fontBold });
   const prescribedDate = new Date(prescription.prescribedDate).toLocaleDateString();
   page.drawText(prescribedDate, { x: col4X, y: tableStartY - 11, size: 8, font });
 
   page.drawText('AGE/SEX', { x: col1X, y: tableStartY - rowHeight - 11, size: 8, font: fontBold });
   const ageSex = `${prescription.patientAge || ''}${prescription.patientSex ? '/' + prescription.patientSex : ''}`;
-  page.drawText(ageSex, { x: col2X, y: tableStartY - rowHeight - 11, size: 8, font });
+  page.drawText(ageSex, { x: col2X - 40, y: tableStartY - rowHeight - 11, size: 8, font });
   page.drawText('ADDRESS', { x: col3X, y: tableStartY - rowHeight - 11, size: 8, font: fontBold });
   page.drawText(prescription.patientAddress || '', { x: col4X, y: tableStartY - rowHeight - 11, size: 8, font });
 
