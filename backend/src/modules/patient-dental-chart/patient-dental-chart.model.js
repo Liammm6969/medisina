@@ -120,7 +120,7 @@ const PatientDentalChartSchema = new mongoose.Schema(
         other: String
       }
     },
-    // Metadata
+    signatureString: { type: String },
     schoolId: Number,
     attendedBy: {
       type: mongoose.Schema.Types.ObjectId,

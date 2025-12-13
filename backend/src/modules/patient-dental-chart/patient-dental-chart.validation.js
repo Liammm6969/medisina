@@ -110,6 +110,7 @@ export const patientDentalChartValidation = {
       walkInPatient: walkInPatientSchema.allow(null),
       dentalHistory: dentalHistorySchema,
       medicalHistory: medicalHistorySchema,
+      signatureString: Joi.string().allow(''),
       schoolId: Joi.alternatives().try(
         Joi.number().integer(),
         Joi.string().pattern(/^\d+$/).custom((value) => parseInt(value, 10))
@@ -125,7 +126,8 @@ export const patientDentalChartValidation = {
       personnel: Joi.string().trim().allow('', null),
       walkInPatient: walkInPatientSchema.allow(null),
       dentalHistory: dentalHistorySchema,
-      medicalHistory: medicalHistorySchema,
+      medicalHistory: medicalHistorySchema, 
+      signatureString: Joi.string().allow(''),
       schoolId: Joi.alternatives().try(
         Joi.number().integer(),
         Joi.string().pattern(/^\d+$/).custom((value) => parseInt(value, 10))

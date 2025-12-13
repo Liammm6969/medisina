@@ -270,7 +270,7 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
   // Header
   drawText('PHILIPPINE DENTAL ASSOCIATION', 180, yPos, { bold: true, size: 14 });
   yPos += 15;
-  drawText('DENTAL CHART', 250, yPos, { bold: true, size: 12, color: rgb(0, 0.4, 0.8) });
+  drawText('DENTAL CHART', 250, yPos, { bold: true, size: 12, });
   yPos += 25;
 
   // PATIENT INFORMATION RECORD
@@ -411,10 +411,10 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
 
   questions.forEach(item => {
     drawText(item.q, 50, yPos, { size: 7 });
-    drawText('Yes', 480, yPos, { size: 7 });
-    drawCheckbox(498, yPos, item.value === true);
-    drawText('No', 520, yPos, { size: 7 });
-    drawCheckbox(535, yPos, item.value === false);
+    drawText('Yes', 380, yPos, { size: 7 });
+    drawCheckbox(398, yPos - 7, item.value === true);
+    drawText('No', 420, yPos, { size: 7 });
+    drawCheckbox(435, yPos - 7, item.value === false);
     yPos += 10;
 
     if (item.detail) {
@@ -434,13 +434,13 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
     { label: 'Penicillin, Antibiotics', value: mh.penicillin || mh.antibiotics, x: 280 },
     { label: 'Sulfa drugs', value: mh.sulfa, x: 70 },
     { label: 'Aspirin', value: mh.aspirin, x: 280 },
-    { label: 'Latex', value: mh.latex, x: 440 },
+    { label: 'Latex', value: mh.latex, x: 280 },
     { label: `Others`, value: mh.others ? true : false, x: 70 }
   ];
 
   allergies.forEach((allergy, index) => {
     if (index === 2 || index === 4) yPos += 10;
-    drawCheckbox(allergy.x, yPos, allergy.value);
+    drawCheckbox(allergy.x, yPos - 7, allergy.value);
     drawText(allergy.label, allergy.x + 12, yPos, { size: 7 });
     if (index === 5 && mh.others) {
       drawText(`: ${mh.others}`, allergy.x + 50, yPos, { size: 7 });
@@ -459,24 +459,24 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
   yPos += 10;
 
   drawText('Are you pregnant?', 70, yPos, { size: 7 });
-  drawText('Yes', 480, yPos, { size: 7 });
-  drawCheckbox(498, yPos, mh.pregnant === true);
-  drawText('No', 520, yPos, { size: 7 });
-  drawCheckbox(535, yPos, mh.pregnant === false);
+  drawText('Yes', 380, yPos, { size: 7 });
+  drawCheckbox(398, yPos - 7, mh.pregnant === true);
+  drawText('No', 420, yPos, { size: 7 });
+  drawCheckbox(535, yPos - 7, mh.pregnant === false);
   yPos += 10;
 
   drawText('Are you nursing?', 70, yPos, { size: 7 });
-  drawText('Yes', 480, yPos, { size: 7 });
-  drawCheckbox(498, yPos, mh.nursing === true);
-  drawText('No', 520, yPos, { size: 7 });
-  drawCheckbox(535, yPos, mh.nursing === false);
+  drawText('Yes', 380, yPos, { size: 7 });
+  drawCheckbox(398, yPos - 7, mh.nursing === true);
+  drawText('No', 420, yPos, { size: 7 });
+  drawCheckbox(435, yPos - 7, mh.nursing === false);
   yPos += 10;
 
   drawText('Are you taking birth control pills?', 70, yPos, { size: 7 });
-  drawText('Yes', 480, yPos, { size: 7 });
-  drawCheckbox(498, yPos, mh.birthControlPills === true);
-  drawText('No', 520, yPos, { size: 7 });
-  drawCheckbox(535, yPos, mh.birthControlPills === false);
+  drawText('Yes', 380, yPos, { size: 7 });
+  drawCheckbox(398, yPos - 7, mh.birthControlPills === true);
+  drawText('No', 420, yPos, { size: 7 });
+  drawCheckbox(435, yPos - 7, mh.birthControlPills === false);
   yPos += 12;
 
   // Blood Type and Pressure
@@ -540,7 +540,7 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
   conditions.forEach(condition => {
     if (condition.label) {
       const xPos = colPositions[condition.col];
-      drawCheckbox(xPos, currentRow, condition.value);
+      drawCheckbox(xPos, currentRow - 7, condition.value);
       drawText(condition.label, xPos + 12, currentRow, { size: 6 });
     }
 
@@ -553,8 +553,8 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
   yPos = currentRow + 12;
 
   // Signature line
-  drawText('Signature', 480, yPos, { size: 7 });
   drawLine(480, yPos + 3, 560, yPos + 3);
+  drawText('Signature', 500, yPos + 10, { size: 7 });
 
   // Save PDF
   const pdfBytes = await pdfDoc.save();
