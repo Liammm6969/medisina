@@ -48,7 +48,7 @@ const pastMedicalHistoryJoi = Joi.object({
 });
 
 const testResultItemJoi = Joi.object({
-  lastTakenDate: Joi.date().min(1900).max('now').allow('', null).optional(),
+  lastTakenDate: Joi.date().min(1900).allow('', null).optional(),
   result: Joi.string().allow('', null).optional(),
   resultDate: Joi.date().max('now').allow('', null).optional().messages({
     'date.max': 'Result date cannot be in the future'

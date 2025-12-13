@@ -6,13 +6,9 @@ import fetch from "node-fetch";
 
 const deleteOldNotifications = async () => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const result = await Notification.deleteMany({
-      createdAt: { $lt: thirtyDaysAgo }
-    });
+    const result = await Notification.deleteMany({});
 
-    logger.info(`Cron job: Deleted ${result.deletedCount} old notifications (older than 30 days)`);
+    logger.info(`Cron job: Deleted ${result.deletedCount} notifications`);
   } catch (error) {
     logger.error('Error deleting old notifications:', error);
   }
@@ -21,14 +17,9 @@ const deleteOldNotifications = async () => {
 
 const deleteOldAuditTrails = async () => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const result = await AuditTrailModel.deleteMany({});
 
-    const result = await AuditTrailModel.deleteMany({
-      createdAt: { $lt: thirtyDaysAgo }
-    });
-
-    logger.info(`Cron job: Deleted ${result.deletedCount} old audit trails (older than 30 days)`);
+    logger.info(`Cron job: Deleted ${result.deletedCount} old audit trails`);
   } catch (error) {
     logger.error('Error deleting old audit trails:', error);
   }
@@ -52,7 +43,7 @@ export const ping = () => {
 
 export const initializeCronJobs = () => {
 
-  cron.schedule('0 2 * * *', async () => {
+cron.schedule('0 2 * * *', async () => {
     logger.info('Running scheduled cleanup job for notifications and audit trails');
     await deleteOldNotifications();
     await deleteOldAuditTrails();
