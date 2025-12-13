@@ -35,6 +35,8 @@ PersonnelSchema.index({ isDeleted: 1, firstName: 1 });
 PersonnelSchema.index({ isDeleted: 1, lastName: 1 });
 PersonnelSchema.index({ position: 1, isDeleted: 1 });
 PersonnelSchema.index({ department: 1, isDeleted: 1 });
+PersonnelSchema.index({ createdBy: 1, isDeleted: 1 });
+PersonnelSchema.index({ schoolDistrictDivision: 1, isDeleted: 1 });
 
 PersonnelSchema.pre("save", async function (next) {
   if (!this.isNew) return next();

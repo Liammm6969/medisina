@@ -7,9 +7,14 @@ import SchoolHealthExamCardService from "#modules/school-health-exam-card/school
 import ChiefComplaintService from "#modules/chief-complaint/chief-complaint.service.js"
 import notificationService from "#modules/notifications/notification.service.js";
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS } from "#utils/constants.js";
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
+import PersonnelHealthCardModel from '#modules/personnel-health-card/personnel-health-card.model.js';
+import DailyTreatmentRecordModel from '#modules/daily-treatment-record/daily-treatment-record.model.js';
+import PrescriptionModel from '#modules/prescription/prescription.model.js';
+import HealthExaminationModel from '#modules/health-examination-record/health-examination.model.js';
+import ChiefComplaintModel from '#modules/chief-complaint/chief-complaint.model.js';
+import DentalTreatmentRecordModel from '#modules/dental-treatment-record/dental-treatment-record.model.js';
+import DentalRecordChartModel from '#modules/dental-record-chart/dental-record-chart.model.js';
 
 class PersonnelService {
   async createPersonnel(data, userId) {
@@ -32,46 +37,24 @@ class PersonnelService {
       isActionRequired: false
     })
 
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.PATTERN);
     return personnel.toPersonnelJSON()
   }
   async getPersonnelCount() {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL.COUNT;
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    // if (cached !== null) return cached;
-    // } catch (error) {
-    // logger.warn('Cache read error:', error);
-    // }
-
     const count = await PersonnelModel.countDocuments({ isDeleted: false });
-    //     await cache.set(cacheKey, count, CACHE_TTL.SHORT);
     return count;
   }
 
   async getPersonnelById(perId) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL.BY_ID(perId);
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
-
     const personnel = await PersonnelModel.findOne({
       perId,
       isDeleted: false
-    });
+    }).lean();
 
     if (!personnel) {
       throw new ApiError(`Personnel with ID ${perId} not found`, StatusCodes.NOT_FOUND);
     }
 
-    //     await cache.set(cacheKey, personnel, CACHE_TTL.MEDIUM);
     return personnel;
-
   }
   async getPersonnelByUserId(userId) {
 
@@ -87,16 +70,11 @@ class PersonnelService {
   }
 
   async getMyPersonnelRecord(userId) {
-
-
     // Get personnel by user ID
     const personnel = await PersonnelModel.findOne({
       createdBy: userId,
       isDeleted: false
     }).lean();
-
-    const PersonnelHealthCardModel = (await import('#modules/personnel-health-card/personnel-health-card.model.js')).default;
-    const ChiefComplaintModel = (await import('#modules/chief-complaint/chief-complaint.model.js')).default;
 
     const [healthCards, chiefComplaints] = await Promise.all([
       PersonnelHealthCardModel.find({
@@ -124,31 +102,20 @@ class PersonnelService {
   }
 
   async getPersonnelByName(personnelName) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL.BY_NAME(personnelName);
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    // logger.warn('Cache read error:', error);
-    // }
-
     const personnel = await PersonnelModel.findOne({
+      isDeleted: false,
       $or: [
         { firstName: new RegExp(personnelName, "i") },
         { lastName: new RegExp(personnelName, "i") },
-        { middleName: new RegExp(personnelName, "i") },
-        { isDeleted: false },
+        { middleName: new RegExp(personnelName, "i") }
       ]
-    });
+    }).lean();
 
     if (!personnel) {
       throw new ApiError(`Personnel ${personnelName} not found`, StatusCodes.NOT_FOUND);
     }
 
-    //     await cache.set(cacheKey, personnel, CACHE_TTL.MEDIUM);
     return personnel;
-
   }
   async fetchAllPersonnel(userId, page = 1, limit = 100) {
     const skip = (page - 1) * limit;
@@ -175,15 +142,6 @@ class PersonnelService {
 
 
   async fetchAllPersonnelByUser(userId, schoolDistrictDivision, page = 1, limit = 100) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL.BY_USER(userId);
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
-
     const query = {
       isDeleted: false
     };
@@ -225,10 +183,7 @@ class PersonnelService {
         .lean(),
       PersonnelModel.countDocuments(query)
     ]);
-    //     await cache.set(cacheKey, personnel, CACHE_TTL.MEDIUM);
-    return personnel
-
-
+    return personnel;
   }
 
   async searchPersonnel(query, userId, schoolDistrictDivision, options = {}) {
@@ -342,9 +297,7 @@ class PersonnelService {
       isActionRequired: false
     })
 
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.PATTERN);
     return updatedPersonnel;
-
   }
 
   async deletePersonnelById(perId, userId) {
@@ -367,12 +320,10 @@ class PersonnelService {
       isActionRequired: false
     })
 
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.PATTERN);
     return {
       message: 'Personnel successfully deleted',
       deletedAt: personnel.deletedAt
     };
-
   }
 
   async restorePersonnel(perId) {
@@ -387,7 +338,6 @@ class PersonnelService {
 
     await personnel.restoreDeleted();
 
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.PATTERN);
     return {
       message: 'Personnel successfully restored',
       personnel: personnel.toPersonnelJSON()
@@ -433,22 +383,15 @@ class PersonnelService {
   }
 
   async approvePersonnelHealthRecord(perId, doctorId, treatment, remarks, file, fileMetadata) {
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.HEALTH_PENDING);
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.HEALTH_APPROVED);
     return await PersonnelHealthCardService.approveHealthRecord(perId, doctorId, treatment, remarks, file, fileMetadata);
   }
 
   async approveSchoolHealthRecord(stdId, gradeLevel, doctorId, treatment, remarks, file,
     fileMetadata) {
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.HEALTH_PENDING);
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.HEALTH_APPROVED);
     return await SchoolHealthExamCardService.approveHealthRecord(stdId, gradeLevel, doctorId, treatment, remarks, file,
       fileMetadata);
   }
   async approveChiefComplaint(perId, doctorId, treatment, remarks, file, fileMetadata) {
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.HEALTH_PENDING);
-    //     await cache.delPattern(CACHE_KEYS.PERSONNEL.HEALTH_APPROVED);
-    //     await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
     return await ChiefComplaintService.approveChiefComplaint(perId, doctorId, treatment, remarks, file, fileMetadata);
   }
 
@@ -458,13 +401,6 @@ class PersonnelService {
     if (!personnel) {
       throw new ApiError(`Personnel with ID ${perId} not found`, StatusCodes.NOT_FOUND);
     }
-    const PersonnelHealthCardModel = (await import('#modules/personnel-health-card/personnel-health-card.model.js')).default;
-    const DailyTreatmentRecordModel = (await import('#modules/daily-treatment-record/daily-treatment-record.model.js')).default;
-    const PrescriptionModel = (await import('#modules/prescription/prescription.model.js')).default;
-    const HealthExaminationModel = (await import('#modules/health-examination-record/health-examination.model.js')).default;
-    const ChiefComplaintModel = (await import('#modules/chief-complaint/chief-complaint.model.js')).default;
-    const DentalTreatmentRecordModel = (await import('#modules/dental-treatment-record/dental-treatment-record.model.js')).default;
-    const DentalRecordChartModel = (await import('#modules/dental-record-chart/dental-record-chart.model.js')).default;
 
     // Fetch all records in parallel
     const [

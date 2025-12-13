@@ -1,14 +1,16 @@
 import ApiError from "#utils/ApiError.js";
 import { StatusCodes } from "http-status-codes";
 import StudentModel from "./student.model.js";
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 import notificationService from '#modules/notifications/notification.service.js';
 import { NOTIFICATION_TYPES, PRIORITY_LEVELS } from '#utils/constants.js';
 import SchoolHealthExamCardModel from "#modules/school-health-exam-card/school-health-exam-card.model.js";
 import DailyTreatmentRecordModel from "#modules/daily-treatment-record/daily-treatment-record.model.js";
 import PrescriptionModel from "#modules/prescription/prescription.model.js";
+import DentalTreatmentRecordModel from '#modules/dental-treatment-record/dental-treatment-record.model.js';
+import DentalRecordChartModel from '#modules/dental-record-chart/dental-record-chart.model.js';
+import HealthExaminationModel from '#modules/health-examination-record/health-examination.model.js';
+import ChiefComplaintModel from '#modules/chief-complaint/chief-complaint.model.js';
 
 class StudentService {
 
@@ -44,29 +46,16 @@ class StudentService {
       });
     }
 
-    //     await cache.delPattern(CACHE_KEYS.STUDENT.PATTERN);
     return updatedStudent;
   }
   async getStudentByLRN(lrn) {
     return await this._findStudentByLRN(lrn);
   }
   async getStudentById(stdId) {
-    //     const cacheKey = CACHE_KEYS.STUDENT.BY_ID(stdId);
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   // logger.warn('Cache read error:', error);
-    // }
-
     const student = await StudentModel.findOne({ stdId, isDeleted: false })
       .select('-__v')
       .lean();
 
-    if (student) {
-      //       await cache.set(cacheKey, student, CACHE_TTL.MEDIUM);
-    }
     return student;
   }
   async getAllStudentsByAttendingPersonnel(attendingPersonnel, schoolDistrictDivision, options = {}) {
@@ -182,7 +171,6 @@ class StudentService {
       });
     }
 
-    //     await cache.delPattern(CACHE_KEYS.STUDENT.PATTERN);
     return updatedStudent;
   }
 
@@ -217,7 +205,6 @@ class StudentService {
       });
     }
 
-    //     await cache.delPattern(CACHE_KEYS.STUDENT.PATTERN);
     return {
       message: 'Student successfully deleted',
       deletedAt: new Date()
@@ -248,7 +235,6 @@ class StudentService {
       });
     }
 
-    //     await cache.delPattern(CACHE_KEYS.STUDENT.PATTERN);
     return {
       message: 'Student successfully restored',
       student: updatedStudent
@@ -301,69 +287,30 @@ class StudentService {
   }
 
   async getStudentsByGradeLevel(gradeLevel) {
-    //     const cacheKey = CACHE_KEYS.STUDENT.BY_GRADE(gradeLevel);
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    //   // logger.warn('Cache read error:', error);
-    // }
-
     const students = await StudentModel.find({
       gradeLevel,
       isDeleted: false
-    }).sort({ lastName: 1, firstName: 1 });
+    }).sort({ lastName: 1, firstName: 1 }).lean();
 
-    //     await cache.set(cacheKey, students, CACHE_TTL.MEDIUM);
     return students;
   }
   async getStudentCount() {
-    //     const cacheKey = CACHE_KEYS.STUDENT.COUNT;
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //   if (cached !== null) return cached;
-    // } catch (error) {
-    //   // logger.warn('Cache read error:', error);
-    // }
-
     const count = await StudentModel.countDocuments({ isDeleted: false });
-    //     await cache.set(cacheKey, count, CACHE_TTL.SHORT);
     return count;
   }
 
   async getStudentsBySection(gradeLevel, section) {
-    //     const cacheKey = CACHE_KEYS.STUDENT.BY_SECTION(gradeLevel, section);
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    //   // logger.warn('Cache read error:', error);
-    // }
-
     const students = await StudentModel.find({
       gradeLevel,
       section,
       isDeleted: false
-    }).sort({ lastName: 1, firstName: 1 });
+    }).sort({ lastName: 1, firstName: 1 }).lean();
 
-    //     await cache.set(cacheKey, students, CACHE_TTL.MEDIUM);
     return students;
   }
 
 
   async getSPEDStudents() {
-    //     const cacheKey = CACHE_KEYS.STUDENT.SPED;
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    //   // logger.warn('Cache read error:', error);
-    // }
-
     const students = await StudentModel.find({
       isSPED: true,
       isDeleted: false
@@ -371,7 +318,6 @@ class StudentService {
       .select('-dateOfBirth -birthplace -address -telephoneNo -parentGuardian -parentContact')
       .lean();
 
-    //     await cache.set(cacheKey, students, CACHE_TTL.LONG);
     return students;
   }
 
@@ -385,15 +331,6 @@ class StudentService {
   }
 
   async countStudentsByGradeLevel() {
-    //     const cacheKey = CACHE_KEYS.STUDENT.GRADE_COUNT;
-
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    //   // logger.warn('Cache read error:', error);
-    // }
-
     const result = await StudentModel.aggregate([
       { $match: { isDeleted: false } },
       { $group: { _id: "$gradeLevel", count: { $sum: 1 } } },
@@ -405,7 +342,6 @@ class StudentService {
       gradeLevelCounts[item._id] = item.count;
     });
 
-    //     await cache.set(cacheKey, gradeLevelCounts, CACHE_TTL.MEDIUM);
     return gradeLevelCounts;
   }
   async _findStudentByLRN(lrn, includeDeleted = false) {
@@ -430,11 +366,6 @@ class StudentService {
     if (!student) {
       throw new ApiError(`Student with ID ${stdId} not found`, StatusCodes.NOT_FOUND);
     }
-
-    const DentalTreatmentRecordModel = (await import('#modules/dental-treatment-record/dental-treatment-record.model.js')).default;
-    const DentalRecordChartModel = (await import('#modules/dental-record-chart/dental-record-chart.model.js')).default;
-    const HealthExaminationModel = (await import('#modules/health-examination-record/health-examination.model.js')).default;
-    const ChiefComplaintModel = (await import('#modules/chief-complaint/chief-complaint.model.js')).default;
 
     const [
       schoolHealthExams,

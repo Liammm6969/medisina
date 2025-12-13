@@ -110,6 +110,8 @@ const SchoolHealthExamCardSchema = new mongoose.Schema({
 
 SchoolHealthExamCardSchema.index({ "examinations.grade": 1 });
 SchoolHealthExamCardSchema.index({ updatedAt: -1 });
+SchoolHealthExamCardSchema.index({ student: 1, isDeleted: 1 });
+SchoolHealthExamCardSchema.index({ "examinations.isApproved": 1, isDeleted: 1 });
 
 SchoolHealthExamCardSchema.pre("save", async function (next) {
   if (this.isNew) {

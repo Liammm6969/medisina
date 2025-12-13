@@ -46,6 +46,8 @@ StudentSchema.index({ isDeleted: 1, gradeLevel: 1 });
 StudentSchema.index({ isDeleted: 1, firstName: 1 });
 StudentSchema.index({ isDeleted: 1, lastName: 1 });
 StudentSchema.index({ schoolName: 1, isDeleted: 1 });
+StudentSchema.index({ attendingPersonnel: 1, isDeleted: 1 });
+StudentSchema.index({ schoolDistrictDivision: 1, isDeleted: 1 });
 
 StudentSchema.pre("save", async function (next) {
   try {
