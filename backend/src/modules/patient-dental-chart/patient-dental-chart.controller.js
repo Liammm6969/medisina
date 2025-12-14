@@ -462,7 +462,7 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
   drawText('Yes', 380, yPos, { size: 7 });
   drawCheckbox(398, yPos - 7, mh.pregnant === true);
   drawText('No', 420, yPos, { size: 7 });
-  drawCheckbox(535, yPos - 7, mh.pregnant === false);
+  drawCheckbox(435, yPos - 7, mh.pregnant === false);
   yPos += 10;
 
   drawText('Are you nursing?', 70, yPos, { size: 7 });
@@ -552,7 +552,26 @@ export const exportPatientDentalChartToPDF = asyncHandler(async (req, res) => {
 
   yPos = currentRow + 12;
 
-  // Signature line
+  // Draw signature if available
+  if (record.signatureString) {
+    try {
+      const base64Data = record.signatureString.replace(/^data:image\/png;base64,/, '');
+      const signatureImageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
+
+      const signatureWidth = 80;
+      const signatureHeight = (signatureImage.height / signatureImage.width) * signatureWidth;
+
+      page.drawImage(signatureImage, {
+        x: 480,
+        y: height - yPos - signatureHeight + 5,
+        width: signatureWidth + 10,
+        height: signatureHeight + 10,
+      });
+    } catch (err) {
+      console.error('Error embedding signature:', err);
+    }
+  }
   drawLine(480, yPos + 3, 560, yPos + 3);
   drawText('Signature', 500, yPos + 10, { size: 7 });
 
