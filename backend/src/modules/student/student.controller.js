@@ -30,10 +30,8 @@ export const getStudentById = asyncHandler(async (req, res) => {
 export const getAllStudentsByAttendingPersonnel = asyncHandler(async (req, res) => {
   const auditInfo = extractAuditInfo(req.user);
   const { page = 1, limit = 100 } = req.query;
-
   const result = await StudentService.getAllStudentsByAttendingPersonnel(
-    auditInfo.personnelId,
-    auditInfo.schoolDistrictDivision,
+    auditInfo.associatedSchools,
     {
       page: parseInt(page),
       limit: parseInt(limit)

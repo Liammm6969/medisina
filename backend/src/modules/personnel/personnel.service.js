@@ -314,6 +314,39 @@ class PersonnelService {
         runValidators: true
       }
     ).select('-password -resetPasswordToken');
+
+    const schoolFieldsToSync = ['schoolName', 'schoolId', 'schoolDistrictDivision'];
+    const hasSchoolFieldsChanged = schoolFieldsToSync.some(field => safeUpdateData[field] !== undefined);
+
+    if (hasSchoolFieldsChanged && existingPersonnel.createdBy) {
+      const userUpdateData = {};
+
+      if (safeUpdateData.schoolName !== undefined) {
+        userUpdateData.schoolName = Array.isArray(safeUpdateData.schoolName)
+          ? safeUpdateData.schoolName
+          : [safeUpdateData.schoolName];
+      }
+      if (safeUpdateData.schoolId !== undefined) {
+        userUpdateData.schoolId = Array.isArray(safeUpdateData.schoolId)
+          ? safeUpdateData.schoolId
+          : [safeUpdateData.schoolId];
+      }
+      if (safeUpdateData.schoolDistrictDivision !== undefined) {
+        userUpdateData.schoolDistrictDivision = Array.isArray(safeUpdateData.schoolDistrictDivision)
+          ? safeUpdateData.schoolDistrictDivision
+          : [safeUpdateData.schoolDistrictDivision];
+      }
+
+      if (Object.keys(userUpdateData).length > 0) {
+        await User.findByIdAndUpdate(
+          existingPersonnel.createdBy,
+          { $set: userUpdateData },
+          { runValidators: true }
+        );
+        logger.info(`Updated user account school info for personnel ${updatedPersonnel.perId}`);
+      }
+    }
+
     await notificationService.createNotification({
       recipientId: userId,
       title: NOTIFICATION_TITLE.PERSONNEL_BIO_DATA,
@@ -321,7 +354,7 @@ class PersonnelService {
       type: NOTIFICATION_TYPES.RECORD_UPDATE,
       priority: PRIORITY_LEVELS.LOW,
       isActionRequired: false
-    })
+    });
 
     return updatedPersonnel;
   }

@@ -29,7 +29,7 @@ router
 
 router
   .route('/my-personnel-record')
-  .get(auth('Doctor', 'Admin', 'Nurse'), personnelController.getMyPersonnelRecord)
+  .get(auth('Doctor', 'Admin', 'Nurse', 'Teacher'), personnelController.getMyPersonnelRecord)
 
 router.route('/:perId/complete-history')
   .get(auth('Admin', 'Doctor', 'Nurse'), validate({ params: getPersonnelById }), personnelController.getCompletePersonnelHistory);

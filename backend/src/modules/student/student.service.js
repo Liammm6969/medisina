@@ -58,26 +58,15 @@ class StudentService {
 
     return student;
   }
-  async getAllStudentsByAttendingPersonnel(attendingPersonnel, schoolDistrictDivision, options = {}) {
+  async getAllStudentsByAttendingPersonnel(associatedSchools, options = {}) {
     const { page = 1, limit = 100 } = options;
     const skip = (page - 1) * limit;
-
     const query = { isDeleted: false };
-    let districts = schoolDistrictDivision;
 
-    if (!districts || (Array.isArray(districts) && districts.length === 0)) {
-      const PersonnelModel = (await import('#modules/personnel/personnel.model.js')).default;
-      const personnel = await PersonnelModel.findById(attendingPersonnel).select('schoolDistrictDivision').lean();
-      districts = personnel?.schoolDistrictDivision;
-    }
-
-    if (districts && Array.isArray(districts) && districts.length > 0) {
-      query.$or = [
-        { attendingPersonnel },
-        { schoolDistrictDivision: { $in: districts } }
-      ];
-    } else {
-      query.attendingPersonnel = attendingPersonnel;
+    if (associatedSchools && Array.isArray(associatedSchools) && associatedSchools.length > 0) {
+      query.schoolId = { $in: associatedSchools };
+    } else if (associatedSchools && typeof associatedSchools === 'string') {
+      query.schoolId = associatedSchools;
     }
 
     const [students, total] = await Promise.all([
