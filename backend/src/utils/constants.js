@@ -1,4 +1,4 @@
-export const personnelRoles = ['Doctor', 'Admin', 'Nurse'];
+export const personnelRoles = ['Doctor', 'Admin', 'Nurse','Teacher'];
 export const gender = ['Male', 'Female', 'Other', 'Prefer not to say'];
 export const civilStatus = ["Single", "Married", "Widowed", "Divorced", '']
 

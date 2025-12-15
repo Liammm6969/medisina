@@ -91,8 +91,8 @@ export const logout = (req, res) => {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
       });
-      res.send('logout');
     });
+    
   });
 };
 

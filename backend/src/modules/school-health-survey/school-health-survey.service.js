@@ -29,8 +29,13 @@ class SchoolHealthSurveyService {
       filters.surveyStatus = filter.surveyStatus
     }
     const queryFilter = userId ? { ...filters, createdBy: userId } : filters;
-    let results = await SchoolHealthSurvey.find(queryFilter);
-    const totalResults = await SchoolHealthSurvey.countDocuments(filter);
+
+    // Execute queries in parallel for better performance
+    const [results, totalResults] = await Promise.all([
+      SchoolHealthSurvey.find(queryFilter).lean(),
+      SchoolHealthSurvey.countDocuments(queryFilter)
+    ]);
+
     return {
       results,
       totalResults
@@ -155,7 +160,8 @@ class SchoolHealthSurveyService {
     };
     return SchoolHealthSurvey.find(query)
       .populate('createdBy', 'firstName lastName role')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
   }
 
   async getApprovedSurveys(filter = {}) {
@@ -167,7 +173,8 @@ class SchoolHealthSurveyService {
     return SchoolHealthSurvey.find(query)
       .populate('createdBy', 'firstName lastName role')
       .populate('approvedBy', 'firstName lastName role')
-      .sort({ approvedAt: -1 });
+      .sort({ approvedAt: -1 })
+      .lean();
   }
 
   async getRejectedSurveys(filter = {}) {
@@ -179,7 +186,8 @@ class SchoolHealthSurveyService {
     return SchoolHealthSurvey.find(query)
       .populate('createdBy', 'firstName lastName role')
       .populate('approvedBy', 'firstName lastName role')
-      .sort({ approvedAt: -1 });
+      .sort({ approvedAt: -1 })
+      .lean();
   }
 
   async getPendingSurveys() {
@@ -741,72 +749,35 @@ class SchoolHealthSurveyService {
     const startDate = new Date(startYear, 5, 1); // June 1
     const endDate = new Date(endYear, 4, 31, 23, 59, 59);
 
-    const healthExamCards = await SchoolHealthExamCard.find({ isDeleted: false })
-      .populate({
-        path: 'student',
-        match: { schoolId: schoolId, isDeleted: false },
-        select: 'schoolId firstName lastName'
-      })
-      .lean();
+    const normalValues = ['Normal', 'Not Examined', 'X', 'a', '', null];
+    const findingsFields = ['skinScalp', 'eyesEarsNose', 'mouthThroatNeck', 'lungsHeart', 'abdomen', 'deformities'];
 
-    const validCards = healthExamCards.filter(card => card.student !== null);
-
-    const learnersMap = new Map();
-
-    const findingsFields = [
-      'skinScalp',
-      'eyesEarsNose',
-      'mouthThroatNeck',
-      'lungsHeart',
-      'abdomen',
-      'deformities'
-    ];
-
-    const normalValues = ['Normal', 'Not Examined', 'X', 'a', '', null, undefined];
-
-    validCards.forEach(card => {
-      if (card.examinations && Array.isArray(card.examinations)) {
-        card.examinations.forEach(exam => {
-          const examDate = exam.findings?.dateOfExamination;
-
-          if (examDate) {
-            const examDateObj = new Date(examDate);
-            if (examDateObj >= startDate && examDateObj <= endDate) {
-              const findings = exam.findings;
-
-              // Process each finding field (values are already text, not codes)
-              findingsFields.forEach(field => {
-                const value = findings[field];
-
-                // Only count if value exists and is not a normal/excluded value
-                if (value && !normalValues.includes(value)) {
-                  const currentCount = learnersMap.get(value) || 0;
-                  learnersMap.set(value, currentCount + 1);
-                }
-              });
-
-              // Process complaint
-              if (exam.complaint && exam.complaint.trim() !== '') {
-                const complaint = exam.complaint.trim();
-                const currentCount = learnersMap.get(complaint) || 0;
-                learnersMap.set(complaint, currentCount + 1);
-              }
-            }
-          }
-        });
+    // Aggregation pipeline for student symptoms
+    const studentPipeline = [
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'student',
+          foreignField: '_id',
+          as: 'studentInfo'
+        }
+      },
+      { $unwind: '$studentInfo' },
+      { $match: { 'studentInfo.schoolId': schoolId, 'studentInfo.isDeleted': false } },
+      { $unwind: '$examinations' },
+      {
+        $match: {
+          'examinations.findings.dateOfExamination': { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $project: {
+          findings: '$examinations.findings',
+          complaint: '$examinations.complaint'
+        }
       }
-    });
-
-    const personnelHealthCards = await PersonnelHealthCard.find({ isDeleted: false })
-      .populate({
-        path: 'personnel',
-        match: { schoolId: { $in: [schoolId] }, isDeleted: false },
-        select: 'schoolId position firstName lastName'
-      })
-      .lean();
-    const validPersonnelCards = personnelHealthCards.filter(card => card.personnel !== null);
-
-    const personnelMap = new Map();
+    ];
 
     // Map of present health status fields to readable symptom names
     const healthStatusSymptoms = {
@@ -828,33 +799,78 @@ class SchoolHealthSurveyService {
       anemia: 'Anemia'
     };
 
-    validPersonnelCards.forEach(card => {
-      const interviewDate = card.interviewedBy?.interviewDate;
+    // Aggregation pipeline for personnel symptoms
+    const personnelPipeline = [
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: 'personnels',
+          localField: 'personnel',
+          foreignField: '_id',
+          as: 'personnelInfo'
+        }
+      },
+      { $unwind: '$personnelInfo' },
+      { $match: { 'personnelInfo.schoolId': { $in: [schoolId] }, 'personnelInfo.isDeleted': false } },
+      {
+        $match: {
+          'interviewedBy.interviewDate': { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $project: {
+          presentHealthStatus: 1
+        }
+      }
+    ];
 
-      if (interviewDate) {
-        const interviewDateObj = new Date(interviewDate);
-        if (interviewDateObj >= startDate && interviewDateObj <= endDate) {
-          const presentHealthStatus = card.presentHealthStatus;
+    // Execute both pipelines in parallel
+    const [studentResults, personnelResults] = await Promise.all([
+      SchoolHealthExamCard.aggregate(studentPipeline),
+      PersonnelHealthCard.aggregate(personnelPipeline)
+    ]);
 
-          if (presentHealthStatus) {
-            // Process boolean symptoms
-            Object.keys(healthStatusSymptoms).forEach(key => {
-              const value = presentHealthStatus[key];
+    const learnersMap = new Map();
+    const personnelMap = new Map();
 
-              if (value === true || (key === 'cough' && value && value.trim() !== '')) {
-                const symptomName = healthStatusSymptoms[key];
-                const currentCount = personnelMap.get(symptomName) || 0;
-                personnelMap.set(symptomName, currentCount + 1);
-              }
-            });
-
-            // Process "others" field
-            if (presentHealthStatus.others && presentHealthStatus.others.trim() !== '') {
-              const otherSymptom = presentHealthStatus.others.trim();
-              const currentCount = personnelMap.get(otherSymptom) || 0;
-              personnelMap.set(otherSymptom, currentCount + 1);
-            }
+    // Process student findings
+    studentResults.forEach(result => {
+      const findings = result.findings;
+      if (findings) {
+        findingsFields.forEach(field => {
+          const value = findings[field];
+          if (value && !normalValues.includes(value)) {
+            const currentCount = learnersMap.get(value) || 0;
+            learnersMap.set(value, currentCount + 1);
           }
+        });
+      }
+
+      // Process complaint
+      if (result.complaint && result.complaint.trim() !== '') {
+        const complaint = result.complaint.trim();
+        const currentCount = learnersMap.get(complaint) || 0;
+        learnersMap.set(complaint, currentCount + 1);
+      }
+    });
+
+    // Process personnel symptoms
+    personnelResults.forEach(result => {
+      const presentHealthStatus = result.presentHealthStatus;
+      if (presentHealthStatus) {
+        Object.keys(healthStatusSymptoms).forEach(key => {
+          const value = presentHealthStatus[key];
+          if (value === true || (key === 'cough' && value && value.trim() !== '')) {
+            const symptomName = healthStatusSymptoms[key];
+            const currentCount = personnelMap.get(symptomName) || 0;
+            personnelMap.set(symptomName, currentCount + 1);
+          }
+        });
+
+        if (presentHealthStatus.others && presentHealthStatus.others.trim() !== '') {
+          const otherSymptom = presentHealthStatus.others.trim();
+          const currentCount = personnelMap.get(otherSymptom) || 0;
+          personnelMap.set(otherSymptom, currentCount + 1);
         }
       }
     });
@@ -864,10 +880,10 @@ class SchoolHealthSurveyService {
         signsSymptoms: symptom,
         numberOfCases: count
       }))
-      .sort((a, b) => b.numberOfCases - a.numberOfCases) // Sort by count
+      .sort((a, b) => b.numberOfCases - a.numberOfCases)
       .map((item, index) => ({
         ...item,
-        rank: index + 1 // Assign rank based on sorted position
+        rank: index + 1
       }));
 
     const sortedPersonnelFindings = Array.from(personnelMap.entries())
@@ -875,16 +891,17 @@ class SchoolHealthSurveyService {
         signsSymptoms: symptom,
         numberOfCases: count
       }))
-      .sort((a, b) => b.numberOfCases - a.numberOfCases) // Sort by count
+      .sort((a, b) => b.numberOfCases - a.numberOfCases)
       .map((item, index) => ({
         ...item,
-        rank: index + 1 // Assign rank based on sorted position
+        rank: index + 1
       }));
 
     const commonSignsSymptoms = {
       learners: sortedLearnersFindings,
       teachingAndNTP: sortedPersonnelFindings
     };
+
     return {
       schoolId,
       schoolYear,
@@ -902,77 +919,129 @@ class SchoolHealthSurveyService {
     const startDate = new Date(startYear, 5, 1);
     const endDate = new Date(endYear, 4, 31, 23, 59, 59);
 
-    // Get health problems from School Health Exam Cards
-    const healthExamCards = await SchoolHealthExamCard.find({ isDeleted: false })
-      .populate({
-        path: 'student',
-        match: { schoolId: schoolId, isDeleted: false },
-        select: 'gender'
-      })
-      .lean();
-
-    const validCards = healthExamCards.filter(card => card.student !== null);
-
-    const healthProblems = { learners: { male: 0, female: 0 }, teachers: { male: 0, female: 0 }, ntp: { male: 0, female: 0 } };
-
-    validCards.forEach(card => {
-      if (card.examinations && Array.isArray(card.examinations)) {
-        card.examinations.forEach(exam => {
-          const examDate = exam.findings?.dateOfExamination;
-          if (examDate) {
-            const examDateObj = new Date(examDate);
-            if (examDateObj >= startDate && examDateObj <= endDate) {
-              const findings = exam.findings;
-              const normalValues = ['Normal', 'Not Examined', 'X', 'a', '', null, undefined];
-              const hasHealthProblem = ['skinScalp', 'eyesEarsNose', 'mouthThroatNeck', 'lungsHeart', 'abdomen', 'deformities']
-                .some(field => findings[field] && !normalValues.includes(findings[field]));
-
-              if (hasHealthProblem && card.student) {
-                const gender = card.student.gender?.toLowerCase();
-                if (gender === 'male') healthProblems.learners.male++;
-                else if (gender === 'female') healthProblems.learners.female++;
-              }
-            }
-          }
-        });
-      }
-    });
-
-    // Get health problems from Personnel Health Cards
-    const personnelHealthCards = await PersonnelHealthCard.find({ isDeleted: false })
-      .populate({
-        path: 'personnel',
-        match: { schoolId: { $in: [schoolId] }, isDeleted: false },
-        select: 'gender position'
-      })
-      .lean();
-
-    const validPersonnelCards = personnelHealthCards.filter(card => card.personnel !== null);
+    const normalValues = ['Normal', 'Not Examined', 'X', 'a', '', null];
     const teachingKeywords = ['teacher', 'instructor', 'professor', 'educator', 'faculty', 'master teacher', 'head teacher', 'principal', 'assistant principal', 'department head', 'coordinator', 'guidance counselor', 'librarian'];
 
-    validPersonnelCards.forEach(card => {
-      const interviewDate = card.interviewedBy?.interviewDate;
-      if (interviewDate) {
-        const interviewDateObj = new Date(interviewDate);
-        if (interviewDateObj >= startDate && interviewDateObj <= endDate) {
-          const presentHealthStatus = card.presentHealthStatus;
-          if (presentHealthStatus) {
-            const hasHealthProblem = Object.values(presentHealthStatus).some(val => val === true || (typeof val === 'string' && val.trim() !== ''));
-            if (hasHealthProblem && card.personnel) {
-              const gender = card.personnel.gender?.toLowerCase();
-              const position = card.personnel.position?.toLowerCase() || '';
-              const isTeaching = teachingKeywords.some(keyword => position.includes(keyword));
-
-              if (isTeaching) {
-                if (gender === 'male') healthProblems.teachers.male++;
-                else if (gender === 'female') healthProblems.teachers.female++;
-              } else {
-                if (gender === 'male') healthProblems.ntp.male++;
-                else if (gender === 'female') healthProblems.ntp.female++;
-              }
-            }
+    // Aggregation pipeline for student health problems
+    const studentPipeline = [
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'student',
+          foreignField: '_id',
+          as: 'studentInfo'
+        }
+      },
+      { $unwind: '$studentInfo' },
+      { $match: { 'studentInfo.schoolId': schoolId, 'studentInfo.isDeleted': false } },
+      { $unwind: '$examinations' },
+      {
+        $match: {
+          'examinations.findings.dateOfExamination': { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $addFields: {
+          hasHealthProblem: {
+            $or: [
+              { $and: [{ $ne: ['$examinations.findings.skinScalp', null] }, { $not: { $in: ['$examinations.findings.skinScalp', normalValues] } }] },
+              { $and: [{ $ne: ['$examinations.findings.eyesEarsNose', null] }, { $not: { $in: ['$examinations.findings.eyesEarsNose', normalValues] } }] },
+              { $and: [{ $ne: ['$examinations.findings.mouthThroatNeck', null] }, { $not: { $in: ['$examinations.findings.mouthThroatNeck', normalValues] } }] },
+              { $and: [{ $ne: ['$examinations.findings.lungsHeart', null] }, { $not: { $in: ['$examinations.findings.lungsHeart', normalValues] } }] },
+              { $and: [{ $ne: ['$examinations.findings.abdomen', null] }, { $not: { $in: ['$examinations.findings.abdomen', normalValues] } }] },
+              { $and: [{ $ne: ['$examinations.findings.deformities', null] }, { $not: { $in: ['$examinations.findings.deformities', normalValues] } }] }
+            ]
           }
         }
+      },
+      { $match: { hasHealthProblem: true } },
+      {
+        $group: {
+          _id: { $toLower: '$studentInfo.gender' },
+          count: { $sum: 1 }
+        }
+      }
+    ];
+
+    // Aggregation pipeline for personnel health problems
+    const personnelPipeline = [
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: 'personnels',
+          localField: 'personnel',
+          foreignField: '_id',
+          as: 'personnelInfo'
+        }
+      },
+      { $unwind: '$personnelInfo' },
+      { $match: { 'personnelInfo.schoolId': { $in: [schoolId] }, 'personnelInfo.isDeleted': false } },
+      {
+        $match: {
+          'interviewedBy.interviewDate': { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $project: {
+          personnelInfo: 1,
+          hasHealthProblem: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: { $objectToArray: { $ifNull: ['$presentHealthStatus', {}] } },
+                    as: 'item',
+                    cond: {
+                      $or: [
+                        { $eq: ['$$item.v', true] },
+                        { $and: [{ $eq: [{ $type: '$$item.v' }, 'string'] }, { $ne: [{ $trim: { input: '$$item.v' } }, ''] }] }
+                      ]
+                    }
+                  }
+                }
+              },
+              0
+            ]
+          }
+        }
+      },
+      { $match: { hasHealthProblem: true } },
+      {
+        $project: {
+          gender: { $toLower: '$personnelInfo.gender' },
+          position: { $toLower: { $ifNull: ['$personnelInfo.position', ''] } }
+        }
+      }
+    ];
+
+    // Execute both pipelines in parallel
+    const [studentResults, personnelResults] = await Promise.all([
+      SchoolHealthExamCard.aggregate(studentPipeline),
+      PersonnelHealthCard.aggregate(personnelPipeline)
+    ]);
+
+    const healthProblems = {
+      learners: { male: 0, female: 0 },
+      teachers: { male: 0, female: 0 },
+      ntp: { male: 0, female: 0 }
+    };
+
+    // Process student results
+    studentResults.forEach(result => {
+      if (result._id === 'male') healthProblems.learners.male = result.count;
+      else if (result._id === 'female') healthProblems.learners.female = result.count;
+    });
+
+    // Process personnel results
+    personnelResults.forEach(result => {
+      const isTeaching = teachingKeywords.some(keyword => result.position.includes(keyword));
+      if (isTeaching) {
+        if (result.gender === 'male') healthProblems.teachers.male++;
+        else if (result.gender === 'female') healthProblems.teachers.female++;
+      } else {
+        if (result.gender === 'male') healthProblems.ntp.male++;
+        else if (result.gender === 'female') healthProblems.ntp.female++;
       }
     });
 

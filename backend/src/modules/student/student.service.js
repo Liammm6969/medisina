@@ -63,7 +63,6 @@ class StudentService {
     const skip = (page - 1) * limit;
 
     const query = { isDeleted: false };
-
     let districts = schoolDistrictDivision;
 
     if (!districts || (Array.isArray(districts) && districts.length === 0)) {

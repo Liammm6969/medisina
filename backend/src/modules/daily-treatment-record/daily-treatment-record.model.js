@@ -31,6 +31,10 @@ const DailyTreatmentRecordSchema = new mongoose.Schema({
 DailyTreatmentRecordSchema.index({ personnel: 1, dateOfTreatment: -1 });
 DailyTreatmentRecordSchema.index({ schoolId: 1 });
 DailyTreatmentRecordSchema.index({ patientName: 1 });
+DailyTreatmentRecordSchema.index({ schoolId: 1, dateOfTreatment: -1, isDeleted: 1 });
+DailyTreatmentRecordSchema.index({ student: 1, dateOfTreatment: -1 });
+DailyTreatmentRecordSchema.index({ personnel: 1, isDeleted: 1 });
+DailyTreatmentRecordSchema.index({ student: 1, isDeleted: 1 });
 DailyTreatmentRecordSchema.pre("save", async function (next) {
   if (!this.isNew) return next();
 

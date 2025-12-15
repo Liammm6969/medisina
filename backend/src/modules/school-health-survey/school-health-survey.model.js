@@ -230,6 +230,9 @@ schoolHealthSurveySchema.index({ schoolName: 1 });
 schoolHealthSurveySchema.index({ createdAt: -1 });
 schoolHealthSurveySchema.index({ surveyStatus: 1 });
 schoolHealthSurveySchema.index({ shs: 1 });
+schoolHealthSurveySchema.index({ isActive: 1 });
+schoolHealthSurveySchema.index({ surveyStatus: 1, isActive: 1 });
+schoolHealthSurveySchema.index({ createdBy: 1, isActive: 1 });
 
 
 schoolHealthSurveySchema.pre('save', async function (next) {
