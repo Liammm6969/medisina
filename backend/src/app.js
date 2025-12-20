@@ -1,4 +1,6 @@
 import express from 'express'
+import path from 'path';
+import { fileURLToPath } from 'url';
 import session from 'express-session';
 import { createClient } from 'redis';
 import { RedisStore } from 'connect-redis';
@@ -16,7 +18,11 @@ import { initRateLimit } from '#config/startup/apilimiter.js';
 import { initProd } from '#config/startup/prod.js';
 import { healthCheck } from '#middleware/health.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+
 
 initializePassport()
 initCORS(app)
@@ -66,6 +72,8 @@ app.use(passport.session());
 app.use(logAuditTrails)
 
 app.get('/health', healthCheck);
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/v1', Route);
 

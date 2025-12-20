@@ -4,6 +4,7 @@ const config = {
   PORT: process.env.PORT || 3000,
   HOST: process.env.HOST || 'localhost',
   CLIENT_URL: process.env.CLIENT_URL,
+  BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
   SESSION_SECRET: process.env.SESSION_SECRET,
   COOKIE_SECRET: process.env.COOKIE_SECRET || process.env.SESSION_SECRET,
   SENTRY_DSN: process.env.SENTRY_DSN,

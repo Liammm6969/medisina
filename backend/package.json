@@ -11,12 +11,9 @@
   "author": "selerqc pogi",
   "license": "ISC",
   "dependencies": {
-    "@cacheable/node-cache": "^1.7.4",
     "@joi/date": "^2.1.1",
     "bcrypt": "^6.0.0",
-    "cloudinary": "^2.7.0",
     "compression": "^1.8.1",
-    "connect-mongo": "^5.1.0",
     "connect-redis": "^9.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

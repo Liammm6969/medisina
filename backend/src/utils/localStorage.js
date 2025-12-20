@@ -28,7 +28,7 @@ const getFileExtension = (file) => {
   return mimeExtMap[file.mimetype] || 'bin';
 };
 
-export async function uploadFileToCloudinary(file, patientId, publicId) {
+export async function uploadFileToLocal(file, patientId, publicId) {
   if (!file) throw new ApiError('No file provided', StatusCodes.BAD_REQUEST);
 
   const folderPath = path.join(UPLOAD_DIR, 'health_records', patientId);
@@ -58,7 +58,7 @@ export async function uploadFileToCloudinary(file, patientId, publicId) {
   };
 }
 
-export async function deleteFile(publicId) {
+export async function deleteLocalFile(publicId) {
   try {
     const filePath = path.join(UPLOAD_DIR, publicId);
     await fs.unlink(filePath);
@@ -71,4 +71,4 @@ export async function deleteFile(publicId) {
   }
 }
 
-export default { uploadFileToCloudinary, deleteFile };
+export { uploadFileToLocal as uploadFileToCloudinary };
