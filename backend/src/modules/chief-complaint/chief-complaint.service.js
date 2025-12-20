@@ -5,8 +5,8 @@ import notificationService from "#modules/notifications/notification.service.js"
 import dailyTreatmentRecordService from "#modules/daily-treatment-record/daily-treatment-record.service.js";
 import personnelService from "#modules/personnel/personnel.service.js";
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS, TREATMENT_STATUS } from "#utils/constants.js";
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 import { uploadFileToCloudinary } from '#utils/cloudinary.js';
 
@@ -64,7 +64,7 @@ class ChiefComplaintService {
       isActionRequired: true
     })
 
-    //     await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
     return complaint;
 
   }
@@ -131,7 +131,7 @@ class ChiefComplaintService {
       isActionRequired: false
     })
 
-    //     await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
     return updatedComplaint;
   }
 
@@ -147,7 +147,7 @@ class ChiefComplaintService {
       isActionRequired: false
     })
 
-    //     await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
     return record;
   }
 
@@ -270,7 +270,7 @@ class ChiefComplaintService {
       isActionRequired: false
     })
 
-    //     await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.CHIEF_COMPLAINT.PATTERN);
     return complaint;
   }
 

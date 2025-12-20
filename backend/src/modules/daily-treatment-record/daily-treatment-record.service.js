@@ -1,7 +1,7 @@
 import DailyTreatmentRecord from './daily-treatment-record.model.js'
 import { limitedAll } from '#utils/concurrency.js';
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 import notificationService from '#modules/notifications/notification.service.js';
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS } from '#utils/constants.js';
@@ -180,7 +180,7 @@ class DailyTreatmentService {
       });
     }
 
-    //     await cache.delPattern(CACHE_KEYS.DAILY_TREATMENT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.DAILY_TREATMENT.PATTERN);
     return record;
   }
 
@@ -209,7 +209,7 @@ class DailyTreatmentService {
       });
     }
 
-    //     await cache.delPattern(CACHE_KEYS.DAILY_TREATMENT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.DAILY_TREATMENT.PATTERN);
     return record;
   }
 
@@ -231,7 +231,7 @@ class DailyTreatmentService {
     }
 
     await record.deleteOne();
-    //     await cache.delPattern(CACHE_KEYS.DAILY_TREATMENT.PATTERN);
+    await cache.delPattern(CACHE_KEYS.DAILY_TREATMENT.PATTERN);
     return true;
   }
 
@@ -250,16 +250,10 @@ class DailyTreatmentService {
   }
 
   async getDailyCount() {
-    //     const cacheKey = CACHE_KEYS.DAILY_TREATMENT.DAILY_COUNT;
+    const cacheKey = CACHE_KEYS.DAILY_TREATMENT.DAILY_COUNT;
 
-    //     try {
-    //       const cachedData = await cache.get(cacheKey);
-    // if (cachedData !== null) {
-    //   return cachedData;
-    // }
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    const cached = await cache.get(cacheKey);
+    if (cached !== null) return cached;
 
     const today = new Date();
     const startOfToday = new Date(today);
@@ -276,7 +270,7 @@ class DailyTreatmentService {
       isDeleted: false
     });
 
-    //     await cache.set(cacheKey, count, CACHE_TTL.SHORT);
+    await cache.set(cacheKey, count, CACHE_TTL.SHORT);
     return count;
   }
 

@@ -8,8 +8,8 @@ import Notification from '#modules/notifications/notification.model.js';
 import notificationService from '#modules/notifications/notification.service.js';
 import { NOTIFICATION_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS } from '#utils/constants.js';
 import { limitConcurrency } from '#utils/concurrency.js';
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 import { uploadFileToCloudinary } from '#utils/cloudinary.js';
 
@@ -32,11 +32,7 @@ class PersonnelHealthCardService {
       isActionRequired: true
     })
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
-    // } catch (error) {
-    // logger.warn('Failed to invalidate personnel health card cache', error);
-    // }
+    await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
 
     return await newHealthCard.save();
 
@@ -103,11 +99,7 @@ class PersonnelHealthCardService {
 
     const personnel = await Personnel.findById(updated.personnel).lean();
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
-    // } catch(error) {
-    // logger.warn('Failed to invalidate personnel health card cache', error);
-    // }
+    await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
 
     return { ...updated, };
   }
@@ -170,11 +162,7 @@ class PersonnelHealthCardService {
     const record = await PersonnelHealthCard.findOneAndDelete({ phcId });
     if (!record) throw new ApiError('Health card record not found', StatusCodes.NOT_FOUND);
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
-    // } catch(error) {
-    // logger.warn('Failed to invalidate personnel health card cache', error);
-    // }
+    await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
 
     return record;
   }
@@ -540,11 +528,7 @@ class PersonnelHealthCardService {
       });
     }
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
-    // } catch(error) {
-    //   logger.warn('Failed to invalidate personnel health card cache', error);
-    // }
+    await cache.delPattern(CACHE_KEYS.PERSONNEL_HEALTH_CARD.PATTERN);
 
     return record;
   }

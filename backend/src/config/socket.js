@@ -8,7 +8,7 @@ let io;
 export const initializeSocket = (server, sessionMiddleware) => {
   io = new Server(server, {
     cors: {
-      origin: ['http://localhost:5173', 'http://localhost:4173', 'https://sgod-medisync.vercel.app'],
+      origin: ['http://localhost:5173','https://sgod-shs.vercel.app'],
       credentials: true,
       methods: ['GET', 'POST'],
     },

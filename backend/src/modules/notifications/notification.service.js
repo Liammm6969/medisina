@@ -4,16 +4,14 @@ import logger from '../../logger/logger.js';
 import authService from '#modules/auth/auth.service.js';
 import ApiError from '#utils/ApiError.js';
 import { emitToUser, emitToRole } from '../../config/socket.js';
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 
 class NotificationService {
-
 
   async createNotification(notificationBody, session = null) {
     const options = session ? { session } : {};
     const [notification] = await Notification.create([notificationBody], options);
-    logger.info(`Notification created with ID: ${notification._id}`);
 
     try {
       emitToUser(notificationBody.recipientId.toString(), 'notification:new', {
@@ -30,14 +28,13 @@ class NotificationService {
       logger.warn('Failed to emit WebSocket notification:', error);
     }
 
-    //     await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
+    await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
     return notification;
   }
 
   async createBulkNotifications(notificationBodies, session = null) {
     const options = session ? { session, ordered: true } : { ordered: true };
     const notifications = await Notification.create(notificationBodies, options);
-    logger.info(`${notifications.length} notifications created in bulk`);
 
     try {
       notifications.forEach((notification, index) => {
@@ -57,39 +54,30 @@ class NotificationService {
       logger.warn('Failed to emit bulk WebSocket notifications:', error);
     }
 
-    //     await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
+    await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
     return notifications;
   }
 
   async getMyNotifications(recipientId) {
-    //     const cacheKey = CACHE_KEYS.NOTIFICATION.MY(recipientId);
+    const cacheKey = CACHE_KEYS.NOTIFICATION.MY(recipientId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    // logger.warn('Cache read error:', error);
-    // }
-
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
 
     const notifications = await Notification
       .find({ recipientId, status: NOTIFICATION_STATUS.UNREAD })
       .sort({ createdAt: -1 })
       .lean();
 
-    logger.info(`Retrieved ${notifications.length} notifications for user ${recipientId}`);
-    //     await cache.set(cacheKey, notifications, CACHE_TTL.SHORT);
+    await cache.set(cacheKey, notifications, CACHE_TTL.SHORT);
     return notifications;
   }
-  async getAllNotifications() {
-    //     const cacheKey = CACHE_KEYS.NOTIFICATION.ALL;
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+  async getAllNotifications() {
+    const cacheKey = CACHE_KEYS.NOTIFICATION.ALL;
+
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
 
     const notifications = await Notification
       .find({
@@ -98,16 +86,13 @@ class NotificationService {
       .sort({ createdAt: -1 })
       .lean();
 
-    logger.info(`Retrieved ${notifications.length} notifications.`);
-    //     await cache.set(cacheKey, notifications, CACHE_TTL.SHORT);
+    await cache.set(cacheKey, notifications, CACHE_TTL.SHORT);
     return notifications;
   }
-
 
   async getNotificationById(id) {
     return await Notification.findById(id);
   }
-
 
   async markAsRead(notificationId) {
     const notification = await this.getNotificationById(notificationId);
@@ -116,9 +101,7 @@ class NotificationService {
     }
 
     const updatedNotification = await notification.markAsRead();
-    logger.info(`Notification ${notificationId} marked as read`);
 
-    // Emit update via WebSocket
     try {
       emitToUser(notification.recipientId.toString(), 'notification:read', {
         id: notificationId,
@@ -127,15 +110,13 @@ class NotificationService {
       logger.warn('Failed to emit WebSocket read update:', error);
     }
 
-    //     await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
+    await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
     return updatedNotification;
   }
-
 
   async markAllAsRead(recipientId) {
     const result = await Notification.deleteMany({ recipientId })
 
-    // Emit update via WebSocket
     try {
       emitToUser(recipientId.toString(), 'notification:allRead', {
         modifiedCount: result.modifiedCount,
@@ -144,7 +125,7 @@ class NotificationService {
       logger.warn('Failed to emit WebSocket all read update:', error);
     }
 
-    //     await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
+    await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
     return { modifiedCount: result.modifiedCount };
   }
 
@@ -155,7 +136,6 @@ class NotificationService {
     }
 
     await Notification.findByIdAndDelete(notificationId);
-    logger.info(`Notification ${notificationId} deleted successfully`);
 
     try {
       emitToUser(notification.recipientId.toString(), 'notification:deleted', {
@@ -165,27 +145,20 @@ class NotificationService {
       logger.warn('Failed to emit WebSocket delete event:', error);
     }
 
-    //     await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
+    await cache.delPattern(CACHE_KEYS.NOTIFICATION.PATTERN);
     return notification;
   }
 
-
   async getUnreadCount(recipientId) {
-    //     const cacheKey = CACHE_KEYS.NOTIFICATION.UNREAD_COUNT(recipientId);
+    const cacheKey = CACHE_KEYS.NOTIFICATION.UNREAD_COUNT(recipientId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    // if (cached !== null) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    const cached = await cache.get(cacheKey);
+    if (cached !== null) return cached;
 
     const count = await Notification.countUnreadByUser(recipientId);
-    //     await cache.set(cacheKey, count, CACHE_TTL.SHORT);
+    await cache.set(cacheKey, count, CACHE_TTL.SHORT);
     return count;
   }
-
-
 
   async getDoctorActivityNotifications(filters = {}) {
     const { activityType, limit = 9999, } = filters;
@@ -205,7 +178,6 @@ class NotificationService {
 
     const summary = await this._getActivitySummary(activityFilter);
 
-    logger.info(`Retrieved ${activities.length} activity notifications for doctor`);
     return {
       activities: activities.map(activity => ({
         id: activity._id,
@@ -262,4 +234,3 @@ class NotificationService {
 const notificationService = new NotificationService();
 
 export default notificationService;
-
