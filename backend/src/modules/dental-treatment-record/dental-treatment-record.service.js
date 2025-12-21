@@ -1,8 +1,8 @@
 import DentalTreatmentRecord from './dental-treatment-record.model.js';
 import ApiError from '#utils/ApiError.js';
 import { StatusCodes } from 'http-status-codes';
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 import notificationService from '#modules/notifications/notification.service.js';
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS } from '#utils/constants.js';
@@ -11,17 +11,17 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 class DentalTreatmentService {
 
   async getAllRecords() {
-    //     const cacheKey = CACHE_KEYS.DENTAL_TREATMENT?.ALL?.() || 'dental_treatment:all';
+    const cacheKey = CACHE_KEYS.DENTAL_TREATMENT.ALL();
 
-    //     try {
-    //       const cachedData = await cache.get(cacheKey);
-    //       if (cachedData) {
-    // logger.info(`Cache hit: ${cacheKey}`);
-    // return cachedData;
-    // }
-    // } catch (error) {
-    // logger.warn('Cache read error, proceeding with DB query:', error);
-    // }
+    try {
+      const cachedData = await cache.get(cacheKey);
+      if (cachedData) {
+        logger.info(`Cache hit: ${cacheKey}`);
+        return cachedData;
+      }
+    } catch (error) {
+      logger.warn('Cache read error, proceeding with DB query:', error);
+    }
 
     const records = await DentalTreatmentRecord.find({ isDeleted: false })
       .populate([
@@ -33,7 +33,7 @@ class DentalTreatmentService {
       .sort({ updatedAt: -1 })
       .lean();
 
-    //     await cache.set(cacheKey, records, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, records, CACHE_TTL.MEDIUM);
     return records;
   }
 
@@ -90,7 +90,7 @@ class DentalTreatmentService {
       });
     }
 
-    //     await cache.delPattern('dental_treatment:*');
+    await cache.delPattern(CACHE_KEYS.DENTAL_TREATMENT.PATTERN);
     return record;
   }
 
@@ -129,7 +129,7 @@ class DentalTreatmentService {
       });
     }
 
-    //     await cache.delPattern('dental_treatment:*');
+    await cache.delPattern(CACHE_KEYS.DENTAL_TREATMENT.PATTERN);
     return record;
   }
 
@@ -159,7 +159,7 @@ class DentalTreatmentService {
       });
     }
 
-    //     await cache.delPattern('dental_treatment:*');
+    await cache.delPattern(CACHE_KEYS.DENTAL_TREATMENT.PATTERN);
     return true;
   }
 
@@ -181,7 +181,7 @@ class DentalTreatmentService {
       throw new ApiError('Dental treatment record not found', StatusCodes.NOT_FOUND);
     }
 
-    //     await cache.delPattern('dental_treatment:*');
+    await cache.delPattern(CACHE_KEYS.DENTAL_TREATMENT.PATTERN);
     return record;
   }
 
@@ -206,7 +206,7 @@ class DentalTreatmentService {
     }
 
     await record.save();
-    //     await cache.delPattern('dental_treatment:*');
+    await cache.delPattern(CACHE_KEYS.DENTAL_TREATMENT.PATTERN);
 
     return record;
   }
@@ -223,7 +223,7 @@ class DentalTreatmentService {
 
     record.treatments.pull(treatmentId);
     await record.save();
-    //     await cache.delPattern('dental_treatment:*');
+    await cache.delPattern(CACHE_KEYS.DENTAL_TREATMENT.PATTERN);
 
     return record;
   }

@@ -152,14 +152,14 @@ class ChiefComplaintService {
   }
 
   async listChiefComplaints(userId) {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.ALL(userId || 'all');
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.ALL(userId || 'all');
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const filter = userId ? { createdBy: userId } : {};
 
@@ -171,7 +171,7 @@ class ChiefComplaintService {
       .sort({ createdAt: -1 })
       .lean();
 
-    //     await cache.set(cacheKey, complaints, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, complaints, CACHE_TTL.MEDIUM);
     return complaints;
   }
 
@@ -275,14 +275,14 @@ class ChiefComplaintService {
   }
 
   async getPendingApprovals() {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.PENDING;
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.PENDING;
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const complaints = await ChiefComplaintModel.find({ isApproved: false })
       .populate([
@@ -292,19 +292,19 @@ class ChiefComplaintService {
       .sort({ createdAt: -1 })
       .lean();
 
-    //     await cache.set(cacheKey, complaints, CACHE_TTL.SHORT);
+    await cache.set(cacheKey, complaints, CACHE_TTL.SHORT);
     return complaints;
   }
 
   async getApprovedComplaints() {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.APPROVED;
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.APPROVED;
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const complaints = await ChiefComplaintModel.find({ isApproved: true })
       .populate([
@@ -315,19 +315,19 @@ class ChiefComplaintService {
       .sort({ approvedAt: -1 })
       .lean();
 
-    //     await cache.set(cacheKey, complaints, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, complaints, CACHE_TTL.MEDIUM);
     return complaints;
   }
 
   async getComplaintTrendsBySchool(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.TRENDS(filters);
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.TRENDS(filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const { schoolId, startDate, endDate } = filters;
 
@@ -416,7 +416,7 @@ class ChiefComplaintService {
       }
     };
 
-    //     await cache.set(cacheKey, data, CACHE_TTL.LONG);
+    await cache.set(cacheKey, data, CACHE_TTL.LONG);
     return data;
   }
 
@@ -505,19 +505,19 @@ class ChiefComplaintService {
       status: item.count > 20 ? 'High' : item.count > 10 ? 'Medium' : 'Low'
     }));
 
-    //     await cache.set(cacheKey, data, CACHE_TTL.LONG);
+    await cache.set(cacheKey, data, CACHE_TTL.LONG);
     return data;
   }
 
   async getComplaintTimeSeries(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.TIME_SERIES(filters);
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.TIME_SERIES(filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const { schoolId, startDate, endDate, groupBy = 'day' } = filters;
 
@@ -611,7 +611,7 @@ class ChiefComplaintService {
       topComplaint: item.complaints.sort((a, b) => b.count - a.count)[0]
     }));
 
-    //     await cache.set(cacheKey, data, CACHE_TTL.LONG);
+    await cache.set(cacheKey, data, CACHE_TTL.LONG);
     return data;
   }
 
@@ -695,14 +695,14 @@ class ChiefComplaintService {
 
 
   async getComplaintAnalyticsDashboard(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.ANALYTICS(filters);
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.ANALYTICS(filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const { schoolId } = filters;
 
@@ -730,20 +730,20 @@ class ChiefComplaintService {
       }
     };
 
-    //     await cache.set(cacheKey, data, CACHE_TTL.LONG);
+    await cache.set(cacheKey, data, CACHE_TTL.LONG);
     return data;
   }
 
 
   async getAutoSchoolComparison(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.COMPARISON(filters);
+    const cacheKey = CACHE_KEYS.CHIEF_COMPLAINT.COMPARISON(filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const { startDate, endDate, minComplaintsThreshold = 5 } = filters;
 
@@ -990,7 +990,7 @@ class ChiefComplaintService {
       recommendations: this._generateAutoRecommendations(insights, alerts)
     };
 
-    //     await cache.set(cacheKey, result, CACHE_TTL.LONG);
+    await cache.set(cacheKey, result, CACHE_TTL.LONG);
     return result;
   }
 

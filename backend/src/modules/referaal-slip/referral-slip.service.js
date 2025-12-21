@@ -3,8 +3,8 @@ import ApiError from "#utils/ApiError.js";
 import { StatusCodes } from "http-status-codes";
 import notificationService from "#modules/notifications/notification.service.js";
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS } from "#utils/constants.js";
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 
 class ReferralSlipService {
@@ -37,24 +37,24 @@ class ReferralSlipService {
       }
     });
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
-    // } catch (error) {
-    //   logger.warn('Failed to invalidate referral slip cache', error);
-    // }
+    try {
+      await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
+    } catch (error) {
+      logger.warn('Failed to invalidate referral slip cache', error);
+    }
 
     return record;
   }
 
   async getReferralSlipById(id) {
-    //     const cacheKey = CACHE_KEYS.REFERRAL_SLIP.BY_ID(id);
+    const cacheKey = CACHE_KEYS.REFERRAL_SLIP.BY_ID(id);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //   //       if (cached) return cached;
-    // } catch(error) {
-    //   logger.warn('Cache get failed for referral slip by id', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for referral slip by id', error);
+    }
 
     const record = await ReferralSlip.findOne({
       rsId: id,
@@ -71,24 +71,24 @@ class ReferralSlipService {
       );
     }
 
-    //     try {
-    //       await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    //   logger.warn('Cache set failed for referral slip by id', error);
-    // }
+    try {
+      await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for referral slip by id', error);
+    }
 
     return record;
   }
 
   async fetchAllReferralSlips(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.REFERRAL_SLIP.ALL(filters);
+    const cacheKey = CACHE_KEYS.REFERRAL_SLIP.ALL(filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   logger.warn('Cache get failed for all referral slips', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for all referral slips', error);
+    }
 
     const query = { isDeleted: false };
 
@@ -111,24 +111,24 @@ class ReferralSlipService {
       timestamp: new Date()
     };
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    //   logger.warn('Cache set failed for all referral slips', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for all referral slips', error);
+    }
 
     return result;
   }
 
   async fetchReferralSlipsByUser(userId, filters = {}) {
-    //     const cacheKey = CACHE_KEYS.REFERRAL_SLIP.BY_USER(userId, filters);
+    const cacheKey = CACHE_KEYS.REFERRAL_SLIP.BY_USER(userId, filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    //   logger.warn('Cache get failed for referral slips by user', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for referral slips by user', error);
+    }
 
     const query = {
       createdBy: userId,
@@ -154,11 +154,11 @@ class ReferralSlipService {
       timestamp: new Date()
     };
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    //   logger.warn('Cache set failed for referral slips by user', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for referral slips by user', error);
+    }
 
     return result;
   }
@@ -201,11 +201,11 @@ class ReferralSlipService {
       }
     });
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
-    // } catch(error) {
-    //   logger.warn('Failed to invalidate referral slip cache', error);
-    // }
+    try {
+      await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
+    } catch (error) {
+      logger.warn('Failed to invalidate referral slip cache', error);
+    }
 
     return existingRecord;
   }
@@ -240,11 +240,11 @@ class ReferralSlipService {
       }
     });
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
-    // } catch(error) {
-    //   logger.warn('Failed to invalidate referral slip cache', error);
-    // }
+    try {
+      await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
+    } catch (error) {
+      logger.warn('Failed to invalidate referral slip cache', error);
+    }
 
     return {
       message: 'Referral Slip successfully deleted',
@@ -283,11 +283,11 @@ class ReferralSlipService {
       }
     });
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
-    // } catch(error) {
-    //   logger.warn('Failed to invalidate referral slip cache', error);
-    // }
+    try {
+      await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
+    } catch (error) {
+      logger.warn('Failed to invalidate referral slip cache', error);
+    }
 
     return {
       message: 'Referral Slip successfully restored',
@@ -331,24 +331,24 @@ class ReferralSlipService {
       }
     });
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
-    // } catch(error) {
-    //   logger.warn('Failed to invalidate referral slip cache', error);
-    // }
+    try {
+      await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
+    } catch (error) {
+      logger.warn('Failed to invalidate referral slip cache', error);
+    }
 
     return record;
   }
 
   async getReferralSlipCount(userId = null) {
-    //     const cacheKey = CACHE_KEYS.REFERRAL_SLIP.COUNT(userId);
+    const cacheKey = CACHE_KEYS.REFERRAL_SLIP.COUNT(userId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //   if (cached !== null) return cached;
-    // } catch(error) {
-    //   logger.warn('Cache get failed for referral slip count', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached !== null) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for referral slip count', error);
+    }
 
     const query = { isDeleted: false };
     if (userId) {
@@ -356,11 +356,11 @@ class ReferralSlipService {
     }
     const count = await ReferralSlip.countDocuments(query);
 
-    //     try {
-    //       await cache.set(cacheKey, count, CACHE_TTL.SHORT);
-    // } catch(error) {
-    //   logger.warn('Cache set failed for referral slip count', error);
-    // }
+    try {
+      await cache.set(cacheKey, count, CACHE_TTL.SHORT);
+    } catch (error) {
+      logger.warn('Cache set failed for referral slip count', error);
+    }
 
     return count;
   }
@@ -481,11 +481,11 @@ class ReferralSlipService {
     const deletePromises = records.map(record => record.softDelete(userId));
     await Promise.all(deletePromises);
 
-    //     try {
-    //       await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
-    // } catch(error) {
-    //   logger.warn('Failed to invalidate referral slip cache', error);
-    // }
+    try {
+      await cache.delPattern(CACHE_KEYS.REFERRAL_SLIP.PATTERN);
+    } catch (error) {
+      logger.warn('Failed to invalidate referral slip cache', error);
+    }
 
     return {
       message: `Successfully deleted ${records.length} record(s)`,

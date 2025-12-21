@@ -350,14 +350,14 @@ class SchoolHealthExaminationService {
 
 
   async getExaminationHistory(stdId) {
-    //     const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.HISTORY(stdId);
+    const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.HISTORY(stdId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   logger.warn('Cache get failed for examination history', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for examination history', error);
+    }
 
     const student = await this._validateStudent(stdId);
 
@@ -400,11 +400,11 @@ class SchoolHealthExaminationService {
       examinations: allExaminations
     };
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    // } catch (error) {
-    //   logger.warn('Cache set failed for examination history', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for examination history', error);
+    }
 
     return result;
   }
@@ -485,14 +485,14 @@ class SchoolHealthExaminationService {
   }
 
   async getNutritionalStatusSummary() {
-    //     const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.NUTRITION_SUMMARY;
+    const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.NUTRITION_SUMMARY;
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   logger.warn('Cache get failed for nutritional status summary', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for nutritional status summary', error);
+    }
 
     const result = await SchoolHealthExamination.aggregate([
       { $match: { isDeleted: false } },
@@ -516,11 +516,11 @@ class SchoolHealthExaminationService {
       },
     ]);
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.LONG);
-    // } catch (error) {
-    //   logger.warn('Cache set failed for nutritional status summary', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.LONG);
+    } catch (error) {
+      logger.warn('Cache set failed for nutritional status summary', error);
+    }
 
     return result;
   }
@@ -1999,14 +1999,14 @@ class SchoolHealthExaminationService {
   }
 
   async getPreventiveProgramsStats(userId) {
-    //     const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.PREVENTIVE_STATS(userId);
+    const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.PREVENTIVE_STATS(userId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   logger.warn('Cache get failed for preventive programs stats', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for preventive programs stats', error);
+    }
 
     const records = await SchoolHealthExamination.find({ isDeleted: false }).lean();
 
@@ -2043,24 +2043,24 @@ class SchoolHealthExaminationService {
       totalStudents: totalExaminations
     };
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    // } catch (error) {
-    //   logger.warn('Cache set failed for preventive programs stats', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for preventive programs stats', error);
+    }
 
     return result;
   }
 
   async getRecentScreenings(limit = 10, userId) {
-    //     const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.RECENT_SCREENINGS(limit, userId);
+    const cacheKey = CACHE_KEYS.SCHOOL_HEALTH_EXAM.RECENT_SCREENINGS(limit, userId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   logger.warn('Cache get failed for recent screenings', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for recent screenings', error);
+    }
 
     const records = await SchoolHealthExamination.find({ isDeleted: false })
       .populate('student', 'firstName lastName stdId')
@@ -2098,11 +2098,11 @@ class SchoolHealthExaminationService {
       };
     });
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.SHORT);
-    // } catch (error) {
-    //   logger.warn('Cache set failed for recent screenings', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.SHORT);
+    } catch (error) {
+      logger.warn('Cache set failed for recent screenings', error);
+    }
 
     return result;
   }

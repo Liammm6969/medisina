@@ -3,8 +3,8 @@ import ApiError from '#utils/ApiError.js';
 import { StatusCodes } from 'http-status-codes';
 import notificationService from '../notifications/notification.service.js';
 import { NOTIFICATION_TYPES, PRIORITY_LEVELS, NOTIFICATION_TITLE } from '#utils/constants.js';
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 import Student from '../student/student.model.js';
 import SchoolHealthExamCard from '../school-health-exam-card/school-health-exam-card.model.js';
@@ -46,19 +46,19 @@ class PrescriptionService {
       logger.warn('Failed to send prescription creation notification:', error);
     }
 
-    //     await cache.delPattern('prescriptions:*');
+    await cache.delPattern(CACHE_KEYS.PRESCRIPTION.PATTERN);
     return prescription;
   }
 
   async getPrescriptionById(prescriptionId) {
     const cacheKey = `prescriptions:${prescriptionId}`;
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    //   logger.warn('Cache get failed', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed', error);
+    }
 
     const prescription = await Prescription.findOne({ prescriptionId, isDeleted: false })
       .populate('prescribedBy', 'firstName lastName role')
@@ -69,7 +69,7 @@ class PrescriptionService {
       throw new ApiError('Prescription not found', StatusCodes.NOT_FOUND);
     }
 
-    //     await cache.set(cacheKey, prescription, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, prescription, CACHE_TTL.MEDIUM);
     return prescription;
   }
   async getAllPrescriptionsByUser(filters = {}) {
@@ -192,7 +192,7 @@ class PrescriptionService {
       logger.warn('Failed to send prescription update notification:', error);
     }
 
-    //     await cache.delPattern('prescriptions:*');
+    await cache.delPattern(CACHE_KEYS.PRESCRIPTION.PATTERN);
     return prescription;
   }
 
@@ -222,7 +222,7 @@ class PrescriptionService {
       logger.warn('Failed to send prescription deletion notification:', error);
     }
 
-    //     await cache.delPattern('prescriptions:*');
+    await cache.delPattern(CACHE_KEYS.PRESCRIPTION.PATTERN);
     return { message: 'Prescription deleted successfully' };
   }
 

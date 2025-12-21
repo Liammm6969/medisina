@@ -39,14 +39,14 @@ class PersonnelHealthCardService {
   }
 
   async getHealthCardById(phcId) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_ID(JSON.stringify(phcId));
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_ID(JSON.stringify(phcId));
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health card by id', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health card by id', error);
+    }
 
     const record = await PersonnelHealthCard.findOne({ phcId })
       .populate('interviewedBy.user', 'firstName lastName').lean()
@@ -60,31 +60,31 @@ class PersonnelHealthCardService {
     const dssResult = await dssService.personnelHealthCardDSS(enrichedCard);
     const result = { ...enrichedCard, dss: dssResult };
 
-    //     try {
-    //       await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health card by id', error);
-    // }
+    try {
+      await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for health card by id', error);
+    }
 
     return result;
   }
   async getHealthCardCount() {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.COUNT;
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.COUNT;
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    // if (cached !== null) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health card count', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached !== null) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health card count', error);
+    }
 
     const count = await PersonnelHealthCard.estimatedDocumentCount();
 
-    //     try {
-    //       await cache.set(cacheKey, count, CACHE_TTL.SHORT);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health card count', error);
-    // }
+    try {
+      await cache.set(cacheKey, count, CACHE_TTL.SHORT);
+    } catch (error) {
+      logger.warn('Cache set failed for health card count', error);
+    }
 
     return count;
   }
@@ -168,14 +168,14 @@ class PersonnelHealthCardService {
   }
 
   async getHealthCardsByCondition(condition) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_CONDITION(condition);
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_CONDITION(condition);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health cards by condition', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health cards by condition', error);
+    }
 
     const records = await PersonnelHealthCard.findByHealthCondition(condition).lean();
     const personnelIds = records.map(r => r.personnel);
@@ -196,24 +196,24 @@ class PersonnelHealthCardService {
       5
     );
 
-    //     try {
-    //       await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health cards by condition', error);
-    // }
+    try {
+      await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for health cards by condition', error);
+    }
 
     return enrichedCards;
   }
 
   async getHealthCardsByAgeRange(minAge, maxAge) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_AGE_RANGE(minAge, maxAge);
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_AGE_RANGE(minAge, maxAge);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health cards by age range', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health cards by age range', error);
+    }
 
     const records = await PersonnelHealthCard.findByAgeRange(minAge, maxAge);
     const personnelIds = records.map(r => r.personnel).filter(Boolean);
@@ -234,24 +234,24 @@ class PersonnelHealthCardService {
       5
     );
 
-    //     try {
-    //       await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health cards by age range', error);
-    // }
+    try {
+      await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for health cards by age range', error);
+    }
 
     return enrichedCards;
   }
 
   async getHealthCardsBySymptoms(symptoms) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_SYMPTOMS(symptoms);
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_SYMPTOMS(symptoms);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health cards by symptoms', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health cards by symptoms', error);
+    }
 
     const records = await PersonnelHealthCard.findBySymptoms(symptoms).lean();
     const personnelIds = records.map(r => r.personnel).filter(Boolean);
@@ -272,24 +272,24 @@ class PersonnelHealthCardService {
       5
     );
 
-    //     try {
-    //       await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health cards by symptoms', error);
-    // }
+    try {
+      await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for health cards by symptoms', error);
+    }
 
     return enrichedCards;
   }
 
   async getHealthCardsByGender(gender) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_GENDER(gender);
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_GENDER(gender);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health cards by gender', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health cards by gender', error);
+    }
 
     const personnel = await Personnel.find({ gender }).lean();
     const personnelIds = personnel.map(p => p._id);
@@ -310,24 +310,24 @@ class PersonnelHealthCardService {
       5
     );
 
-    //     try {
-    //       await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health cards by gender', error);
-    // }
+    try {
+      await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for health cards by gender', error);
+    }
 
     return enrichedCards;
   }
 
   async getRecentHealthCards(days, userId) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.RECENT(days, userId);
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.RECENT(days, userId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for recent health cards', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for recent health cards', error);
+    }
 
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - days);
@@ -354,24 +354,24 @@ class PersonnelHealthCardService {
       5
     );
 
-    //     try {
-    //       await cache.set(cacheKey, enrichedCards, CACHE_TTL.SHORT);
-    // } catch(error) {
-    // logger.warn('Cache set failed for recent health cards', error);
-    // }
+    try {
+      await cache.set(cacheKey, enrichedCards, CACHE_TTL.SHORT);
+    } catch (error) {
+      logger.warn('Cache set failed for recent health cards', error);
+    }
 
     return enrichedCards;
   }
 
   async getHealthCardsByPersonnel(phcId) {
-    //     const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_PERSONNEL(phcId);
+    const cacheKey = CACHE_KEYS.PERSONNEL_HEALTH_CARD.BY_PERSONNEL(phcId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache get failed for health cards by personnel', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache get failed for health cards by personnel', error);
+    }
 
     const records = await PersonnelHealthCard.find({ phcId }).lean();
     const personnelIds = records.map(r => r.personnel).filter(Boolean);
@@ -392,11 +392,11 @@ class PersonnelHealthCardService {
       5
     );
 
-    //     try {
-    //       await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
-    // } catch(error) {
-    // logger.warn('Cache set failed for health cards by personnel', error);
-    // }
+    try {
+      await cache.set(cacheKey, enrichedCards, CACHE_TTL.MEDIUM);
+    } catch (error) {
+      logger.warn('Cache set failed for health cards by personnel', error);
+    }
     return enrichedCards;
   }
 

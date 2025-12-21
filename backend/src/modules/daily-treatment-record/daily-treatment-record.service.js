@@ -12,17 +12,17 @@ import { StatusCodes } from 'http-status-codes';
 class DailyTreatmentService {
 
   async getAllRecords(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.DAILY_TREATMENT.ALL(filters);
+    const cacheKey = CACHE_KEYS.DAILY_TREATMENT.ALL(filters);
 
-    //     try {
-    //       const cachedData = await cache.get(cacheKey);
-    //       if (cachedData) {
-    // logger.info(`Cache hit: ${cacheKey}`);
-    // return cachedData;
-    // }
-    // } catch (error) {
-    // logger.warn('Cache read error, proceeding with DB query:', error);
-    // }
+    try {
+      const cachedData = await cache.get(cacheKey);
+      if (cachedData) {
+        logger.info(`Cache hit: ${cacheKey}`);
+        return cachedData;
+      }
+    } catch (error) {
+      logger.warn('Cache read error, proceeding with DB query:', error);
+    }
 
     const { startDate, endDate, gradeLevel, search, limit = 50, attendedBy, schoolId } = filters;
 
@@ -153,7 +153,7 @@ class DailyTreatmentService {
         .lean();
     }
 
-    //     await cache.set(cacheKey, records, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, records, CACHE_TTL.MEDIUM);
     return records;
   }
 
@@ -275,16 +275,16 @@ class DailyTreatmentService {
   }
 
   async getDashboardStats(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.DAILY_TREATMENT.DASHBOARD(filters);
+    const cacheKey = CACHE_KEYS.DAILY_TREATMENT.DASHBOARD(filters);
 
-    //     try {
-    //       const cachedData = await cache.get(cacheKey);
-    //       if (cachedData) {
-    // return cachedData;
-    // }
-    // } catch (error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cachedData = await cache.get(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const { startDate, endDate, userId } = filters;
 
@@ -384,21 +384,21 @@ class DailyTreatmentService {
       }
     };
 
-    //     await cache.set(cacheKey, stats, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, stats, CACHE_TTL.MEDIUM);
     return stats;
   }
 
   async getRecentTreatments(limit = 10, userId) {
-    //     const cacheKey = CACHE_KEYS.DAILY_TREATMENT.RECENT(limit, userId);
+    const cacheKey = CACHE_KEYS.DAILY_TREATMENT.RECENT(limit, userId);
 
-    //     try {
-    //       const cachedData = await cache.get(cacheKey);
-    //       if (cachedData) {
-    // return cachedData;
-    // }
-    // } catch (error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cachedData = await cache.get(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const query = { isDeleted: false };
     if (userId) {
@@ -427,7 +427,7 @@ class DailyTreatmentService {
       createdAt: treatment.createdAt
     }));
 
-    //     await cache.set(cacheKey, result, CACHE_TTL.SHORT);
+    await cache.set(cacheKey, result, CACHE_TTL.SHORT);
     return result;
   }
 

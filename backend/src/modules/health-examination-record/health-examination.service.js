@@ -4,8 +4,8 @@ import ApiError from "#utils/ApiError.js";
 import { StatusCodes } from "http-status-codes";
 import notificationService from "#modules/notifications/notification.service.js";
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPES, PRIORITY_LEVELS } from "#utils/constants.js";
-// import cache from '#utils/cache.js';
-// import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
+import cache from '#utils/cache.js';
+import { CACHE_KEYS, CACHE_TTL } from '#utils/cacheKeys.js';
 import logger from '#logger/logger.js';
 
 class HealthExaminationService {
@@ -41,18 +41,18 @@ class HealthExaminationService {
       isActionRequired: false,
     });
 
-    //     await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
+    await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
     return record;
   }
   async getHealthExaminationById(heId) {
-    //     const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_ID(heId);
+    const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_ID(heId);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch (error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const record = await HealthExaminationRecord.findOne({
       heId,
@@ -69,18 +69,18 @@ class HealthExaminationService {
       );
     }
 
-    //     await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
     return record;
   }
   async getHealthExaminationByMongoId(id) {
-    //     const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_MONGO_ID(id);
+    const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_MONGO_ID(id);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const record = await HealthExaminationRecord.findOne({
       _id: id,
@@ -97,18 +97,18 @@ class HealthExaminationService {
       );
     }
 
-    //     await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
     return record;
   }
   async fetchAllHealthExaminations(filters = {}) {
-    //     const cacheKey = CACHE_KEYS.HEALTH_EXAM.ALL(filters);
+    const cacheKey = CACHE_KEYS.HEALTH_EXAM.ALL(filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const query = { isDeleted: false };
     if (filters.division) {
@@ -138,18 +138,18 @@ class HealthExaminationService {
       timestamp: new Date()
     };
 
-    //     await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
     return result;
   }
   async fetchHealthExaminationsByUser(userId, filters = {}) {
-    //     const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_USER(userId, filters);
+    const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_USER(userId, filters);
 
-    //     try {
-    //       const cached = await cache.get(cacheKey);
-    //       if (cached) return cached;
-    // } catch(error) {
-    // logger.warn('Cache read error:', error);
-    // }
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) return cached;
+    } catch (error) {
+      logger.warn('Cache read error:', error);
+    }
 
     const query = {
       createdBy: userId,
@@ -182,7 +182,7 @@ class HealthExaminationService {
       timestamp: new Date()
     };
 
-    //     await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+    await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
     return result;
   }
   async updateHealthExaminationById(heId, updateData, userId) {
@@ -213,7 +213,7 @@ class HealthExaminationService {
       isActionRequired: false,
     });
 
-    //     await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
+    await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
     return existingRecord;
   }
   async deleteHealthExaminationById(heId, userId) {
@@ -238,7 +238,7 @@ class HealthExaminationService {
       isActionRequired: false,
     });
 
-    //     await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
+    await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
     return {
       message: 'Health Examination Record successfully deleted',
       deletedAt: record.deletedAt,
@@ -294,7 +294,7 @@ class HealthExaminationService {
       isActionRequired: false,
     });
 
-    //     await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
+    await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
 
     return {
       message: 'Health Examination marked as completed',
@@ -534,7 +534,7 @@ class HealthExaminationService {
       isActionRequired: false,
     });
 
-    //     await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
+    await cache.delPattern(CACHE_KEYS.HEALTH_EXAM.PATTERN);
 
     return {
       message: 'Health Examination Record approved successfully',

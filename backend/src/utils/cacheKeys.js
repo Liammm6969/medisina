@@ -154,6 +154,13 @@ export const CACHE_KEYS = {
     BY_PRESCRIBER: (userId) => `prx:prescriber:${userId}`,
     STATS: (filters) => `prx:stats:${JSON.stringify(filters)}`,
     PATTERN: 'prx:*'
+  },
+  DENTAL_TREATMENT: {
+    ALL: () => 'dental:all',
+    BY_ID: (id) => `dental:id:${id}`,
+    BY_PATIENT: (patientId, patientType) => `dental:patient:${patientType}:${patientId}`,
+    STATS: (filters) => `dental:stats:${JSON.stringify(filters)}`,
+    PATTERN: 'dental:*'
   }
 };
 
