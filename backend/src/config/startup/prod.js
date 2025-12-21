@@ -29,7 +29,7 @@ export function initProd(app) {
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "frame-ancestors": ["'self'", "https://srv1202622.hstgr.cloud"],
+        "frame-ancestors": ["'self'", "https://srv1202622.hstgr.cloud","https://sgod-shs.vercel.app"],
       },
     },
   }));
