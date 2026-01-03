@@ -4,7 +4,7 @@ import logger from './src/logger/logger.js';
 import mongoose from 'mongoose';
 import { initializeSocket } from './src/config/socket.js';
 import { initializeCronJobs } from './src/config/cronjobs.js';
-// import cache from './src/utils/cache.js';
+import cache from './src/utils/cache.js';
 
 let server
 let io
@@ -44,7 +44,7 @@ const startServer = async () => {
 
     await connectDB();
 
-    // await cache.connect();
+    await cache.connect();
 
     server = app.listen(config.PORT, () => {
 
