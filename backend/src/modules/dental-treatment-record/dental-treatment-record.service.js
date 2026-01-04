@@ -12,29 +12,23 @@ class DentalTreatmentService {
 
   async getAllRecords() {
     const cacheKey = CACHE_KEYS.DENTAL_TREATMENT.ALL();
-
-    try {
-      const cachedData = await cache.get(cacheKey);
-      if (cachedData) {
-        logger.info(`Cache hit: ${cacheKey}`);
-        return cachedData;
-      }
-    } catch (error) {
-      logger.warn('Cache read error, proceeding with DB query:', error);
+    const { data, hit } = await cache.getOrSet(
+      cacheKey,
+      async () => await DentalTreatmentRecord.find({ isDeleted: false })
+        .populate([
+          { path: 'student', select: 'firstName lastName stdId schoolName gradeLevel' },
+          { path: 'personnel', select: 'firstName lastName perId position' },
+          { path: 'attendedBy', select: 'firstName lastName role' },
+          { path: 'lastModifiedBy', select: 'firstName lastName role' }
+        ])
+        .sort({ updatedAt: -1 })
+        .lean(),
+      CACHE_TTL.MEDIUM
+    );
+    if (hit) {
+      logger.info(`Cache hit: ${cacheKey}`);
     }
-
-    const records = await DentalTreatmentRecord.find({ isDeleted: false })
-      .populate([
-        { path: 'student', select: 'firstName lastName stdId schoolName gradeLevel' },
-        { path: 'personnel', select: 'firstName lastName perId position' },
-        { path: 'attendedBy', select: 'firstName lastName role' },
-        { path: 'lastModifiedBy', select: 'firstName lastName role' }
-      ])
-      .sort({ updatedAt: -1 })
-      .lean();
-
-    await cache.set(cacheKey, records, CACHE_TTL.MEDIUM);
-    return records;
+    return data;
   }
 
   async getRecordById(id) {

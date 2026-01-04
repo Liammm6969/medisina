@@ -46,144 +46,128 @@ class HealthExaminationService {
   }
   async getHealthExaminationById(heId) {
     const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_ID(heId);
-
-    try {
-      const cached = await cache.get(cacheKey);
-      if (cached) return cached;
-    } catch (error) {
-      logger.warn('Cache read error:', error);
-    }
-
-    const record = await HealthExaminationRecord.findOne({
-      heId,
-      isDeleted: false
-    })
-      .populate('createdBy', 'firstName lastName role email')
-      .populate('updatedBy', 'firstName lastName role')
-      .populate('exam.physician.userId', 'firstName lastName role email')
-      .lean();
-    if (!record) {
-      throw new ApiError(
-        `Health Examination Record with ID ${heId} not found`,
-        StatusCodes.NOT_FOUND
-      );
-    }
-
-    await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
-    return record;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const record = await HealthExaminationRecord.findOne({
+          heId,
+          isDeleted: false
+        })
+          .populate('createdBy', 'firstName lastName role email')
+          .populate('updatedBy', 'firstName lastName role')
+          .populate('exam.physician.userId', 'firstName lastName role email')
+          .lean();
+        if (!record) {
+          throw new ApiError(
+            `Health Examination Record with ID ${heId} not found`,
+            StatusCodes.NOT_FOUND
+          );
+        }
+        return record;
+      },
+      CACHE_TTL.MEDIUM
+    );
+    return data;
   }
   async getHealthExaminationByMongoId(id) {
     const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_MONGO_ID(id);
-
-    try {
-      const cached = await cache.get(cacheKey);
-      if (cached) return cached;
-    } catch (error) {
-      logger.warn('Cache read error:', error);
-    }
-
-    const record = await HealthExaminationRecord.findOne({
-      _id: id,
-      isDeleted: false
-    })
-      .populate('createdBy', 'firstName lastName role email')
-      .populate('updatedBy', 'firstName lastName role')
-      .populate('exam.physician.userId', 'firstName lastName role email')
-      .lean();
-    if (!record) {
-      throw new ApiError(
-        `Health Examination Record not found`,
-        StatusCodes.NOT_FOUND
-      );
-    }
-
-    await cache.set(cacheKey, record, CACHE_TTL.MEDIUM);
-    return record;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const record = await HealthExaminationRecord.findOne({
+          _id: id,
+          isDeleted: false
+        })
+          .populate('createdBy', 'firstName lastName role email')
+          .populate('updatedBy', 'firstName lastName role')
+          .populate('exam.physician.userId', 'firstName lastName role email')
+          .lean();
+        if (!record) {
+          throw new ApiError(
+            `Health Examination Record not found`,
+            StatusCodes.NOT_FOUND
+          );
+        }
+        return record;
+      },
+      CACHE_TTL.MEDIUM
+    );
+    return data;
   }
   async fetchAllHealthExaminations(filters = {}) {
     const cacheKey = CACHE_KEYS.HEALTH_EXAM.ALL(filters);
-
-    try {
-      const cached = await cache.get(cacheKey);
-      if (cached) return cached;
-    } catch (error) {
-      logger.warn('Cache read error:', error);
-    }
-
-    const query = { isDeleted: false };
-    if (filters.division) {
-      query.division = filters.division;
-    }
-    if (filters.department) {
-      query.department = filters.department;
-    }
-    if (filters.priority) {
-      query['exam.priority'] = filters.priority;
-    }
-    if (filters.startDate && filters.endDate) {
-      query['exam.date'] = {
-        $gte: new Date(filters.startDate),
-        $lte: new Date(filters.endDate)
-      };
-    }
-    const records = await HealthExaminationRecord.find(query)
-      .populate('createdBy', 'firstName lastName role')
-      .populate('updatedBy', 'firstName lastName')
-      .sort({ 'exam.date': -1, createdAt: -1 })
-      .lean();
-
-    const result = {
-      data: records,
-      total: records.length,
-      timestamp: new Date()
-    };
-
-    await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    return result;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const query = { isDeleted: false };
+        if (filters.division) {
+          query.division = filters.division;
+        }
+        if (filters.department) {
+          query.department = filters.department;
+        }
+        if (filters.priority) {
+          query['exam.priority'] = filters.priority;
+        }
+        if (filters.startDate && filters.endDate) {
+          query['exam.date'] = {
+            $gte: new Date(filters.startDate),
+            $lte: new Date(filters.endDate)
+          };
+        }
+        const records = await HealthExaminationRecord.find(query)
+          .populate('createdBy', 'firstName lastName role')
+          .populate('updatedBy', 'firstName lastName')
+          .sort({ 'exam.date': -1, createdAt: -1 })
+          .lean();
+        return {
+          data: records,
+          total: records.length,
+          timestamp: new Date()
+        };
+      },
+      CACHE_TTL.MEDIUM
+    );
+    return data;
   }
   async fetchHealthExaminationsByUser(userId, filters = {}) {
     const cacheKey = CACHE_KEYS.HEALTH_EXAM.BY_USER(userId, filters);
-
-    try {
-      const cached = await cache.get(cacheKey);
-      if (cached) return cached;
-    } catch (error) {
-      logger.warn('Cache read error:', error);
-    }
-
-    const query = {
-      createdBy: userId,
-      isDeleted: false
-    };
-    if (filters.division) {
-      query.division = filters.division;
-    }
-    if (filters.department) {
-      query.department = filters.department;
-    }
-    if (filters.priority) {
-      query['exam.priority'] = filters.priority;
-    }
-    if (filters.startDate && filters.endDate) {
-      query['exam.date'] = {
-        $gte: new Date(filters.startDate),
-        $lte: new Date(filters.endDate)
-      };
-    }
-    const records = await HealthExaminationRecord.find(query)
-      .populate('createdBy', 'firstName lastName role')
-      .populate('updatedBy', 'firstName lastName')
-      .sort({ 'exam.date': -1, createdAt: -1 })
-      .lean();
-
-    const result = {
-      data: records,
-      total: records.length,
-      timestamp: new Date()
-    };
-
-    await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
-    return result;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const query = {
+          createdBy: userId,
+          isDeleted: false
+        };
+        if (filters.division) {
+          query.division = filters.division;
+        }
+        if (filters.department) {
+          query.department = filters.department;
+        }
+        if (filters.priority) {
+          query['exam.priority'] = filters.priority;
+        }
+        if (filters.startDate && filters.endDate) {
+          query['exam.date'] = {
+            $gte: new Date(filters.startDate),
+            $lte: new Date(filters.endDate)
+          };
+        }
+        const records = await HealthExaminationRecord.find(query)
+          .populate('createdBy', 'firstName lastName role')
+          .populate('updatedBy', 'firstName lastName')
+          .sort({ 'exam.date': -1, createdAt: -1 })
+          .lean();
+        return {
+          data: records,
+          total: records.length,
+          timestamp: new Date()
+        };
+      },
+      CACHE_TTL.MEDIUM
+    );
+    return data;
   }
   async updateHealthExaminationById(heId, updateData, userId) {
     const existingRecord = await HealthExaminationRecord.findOne({

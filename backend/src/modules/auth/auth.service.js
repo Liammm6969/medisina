@@ -172,24 +172,20 @@ class AuthService {
   }
   async fetchAllUsers() {
     const cacheKey = CACHE_KEYS.USER.ALL;
-
-    const cached = await cache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    const users = await User.find({ isDeleted: false, })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
-      .lean();
-
-    const count = users.length
-    const formattedUsers = users.map(user => ({
-      ...user,
-      createdAt: new Date(user.createdAt).toLocaleDateString("en-GB")
-    }));
-
-    await cache.set(cacheKey, formattedUsers, CACHE_TTL.SHORT);
-    return formattedUsers;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const users = await User.find({ isDeleted: false })
+          .select('-password -resetPasswordToken -resetPasswordExpires')
+          .lean();
+        return users.map(user => ({
+          ...user,
+          createdAt: new Date(user.createdAt).toLocaleDateString("en-GB")
+        }));
+      },
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async searchUsers(query, options = {}) {
@@ -240,7 +236,6 @@ class AuthService {
   }
 
   async updateUser(email, data) {
-    console.log(data)
     const existingUser = await User.findOne({
       isDeleted: false,
       email,
@@ -270,7 +265,6 @@ class AuthService {
     ).select('-password -resetPasswordToken -resetPasswordExpires').lean();
 
     await cache.delPattern(CACHE_KEYS.USER.PATTERN);
-
     return updatedUser;
   }
   async toggleAllStatus() {

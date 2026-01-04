@@ -2,26 +2,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-export function isValidGradeLevel(gradeLevel) {
-  const validGrades = [
-    'kinder', 'kinderSPED', 'grade1', 'grade1SPED', 'grade2', 'grade2SPED',
-    'grade3', 'grade3SPED', 'grade4', 'grade4SPED', 'grade5', 'grade5SPED',
-    'grade6', 'grade6SPED', 'grade7', 'grade7SPED', 'grade8', 'grade8SPED',
-    'grade9', 'grade9SPED', 'grade10', 'grade10SPED', 'grade11', 'grade11SPED',
-    'grade12', 'grade12SPED'
-  ];
-  return validGrades.includes(gradeLevel);
-}
-
-export function getAllGradeFields() {
-  return [
-    'kinder', 'kinderSPED', 'grade1', 'grade1SPED', 'grade2', 'grade2SPED',
-    'grade3', 'grade3SPED', 'grade4', 'grade4SPED', 'grade5', 'grade5SPED',
-    'grade6', 'grade6SPED', 'grade7', 'grade7SPED', 'grade8', 'grade8SPED',
-    'grade9', 'grade9SPED', 'grade10', 'grade10SPED', 'grade11', 'grade11SPED',
-    'grade12', 'grade12SPED'
-  ];
-}
 export function extractAuditInfo(user) {
 
   if (!user) return {};

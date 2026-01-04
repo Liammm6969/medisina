@@ -46,13 +46,11 @@ const register = Joi.object({
     "array.base": "School ID must be an array.",
     "string.max": "Each School ID must be at most 20 characters.",
   }),
-  schoolName: Joi.array().items(Joi.string().trim().max(50)).optional().messages({
+  schoolName: Joi.array().items(Joi.string().trim()).optional().messages({
     "array.base": "School Name must be an array.",
-    "string.max": "Each School Name must be at most 50 characters.",
   }),
-  schoolDistrictDivision: Joi.array().items(Joi.string().trim().max(50)).optional().messages({
+  schoolDistrictDivision: Joi.array().items(Joi.string().trim()).optional().messages({
     "array.base": "School District Division must be an array.",
-    "string.max": "Each School District Division must be at most 50 characters.",
   }),
 
   gender: Joi.string()
@@ -141,11 +139,10 @@ const updateUser = Joi.object({
   lastName: Joi.string().trim().min(3).max(25).optional(),
   role: Joi.string().valid(...personnelRoles).optional(),
   schoolId: Joi.array().items(Joi.string().trim().max(20)).optional(),
-  schoolDistrictDivision: Joi.array().items(Joi.string().trim().max(50)).optional(),
+  schoolDistrictDivision: Joi.array().items(Joi.string().trim()).optional(),
   status: Joi.string().valid('Approved', 'Rejected', 'Pending').optional(),
-  schoolName: Joi.array().items(Joi.string().trim().max(50)).optional().messages({
+  schoolName: Joi.array().items(Joi.string().trim()).optional().messages({
     "array.base": "School Name must be an array.",
-    "string.max": "Each School Name must be at most 50 characters.",
   }),
   // Personnel fields that can be updated
   gender: Joi.string().valid(...gender).optional(),

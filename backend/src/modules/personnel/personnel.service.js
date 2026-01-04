@@ -70,14 +70,12 @@ class PersonnelService {
   }
   async getPersonnelCount() {
     const cacheKey = CACHE_KEYS.PERSONNEL.COUNT;
-
-    const cached = await cache.get(cacheKey);
-    if (cached !== null) return cached;
-
-    const count = await PersonnelModel.countDocuments({ isDeleted: false });
-
-    await cache.set(cacheKey, count, CACHE_TTL.SHORT);
-    return count;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => await PersonnelModel.countDocuments({ isDeleted: false }),
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async getPersonnelById(perId) {
@@ -89,18 +87,6 @@ class PersonnelService {
     if (!personnel) {
       throw new ApiError(`Personnel with ID ${perId} not found`, StatusCodes.NOT_FOUND);
     }
-
-    return personnel;
-  }
-  async getPersonnelByUserId(userId) {
-
-
-    const personnel = await PersonnelModel.findOne({
-      createdBy: userId,
-      isDeleted: false
-    }).lean();
-
-
 
     return personnel;
   }
@@ -178,10 +164,16 @@ class PersonnelService {
 
 
   async fetchAllPersonnelByUser(schoolName, page = 1, limit = 100) {
+    const doctorUsers = await User.find({
+      role: 'Doctor',
+      isDeleted: false
+    }).select('_id').lean();
+    const doctorIds = doctorUsers.map(u => u._id);
+
     const query = {
       isDeleted: false,
-      schoolName: { $in: schoolName }
-
+      schoolName: { $in: schoolName },
+      createdBy: { $nin: doctorIds }
     };
     const skip = (page - 1) * limit;
 

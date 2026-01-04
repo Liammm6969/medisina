@@ -14,15 +14,144 @@ class DailyTreatmentService {
   async getAllRecords(filters = {}) {
     const cacheKey = CACHE_KEYS.DAILY_TREATMENT.ALL(filters);
 
-    try {
-      const cachedData = await cache.get(cacheKey);
-      if (cachedData) {
-        logger.info(`Cache hit: ${cacheKey}`);
-        return cachedData;
-      }
-    } catch (error) {
-      logger.warn('Cache read error, proceeding with DB query:', error);
+    const { data, hit } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const { startDate, endDate, gradeLevel, search, limit = 50, attendedBy, schoolId } = filters;
+
+        const query = { isDeleted: false };
+
+        if (startDate || endDate) {
+          query.dateOfTreatment = {};
+          if (startDate) {
+            query.dateOfTreatment.$gte = new Date(startDate);
+          }
+          if (endDate) {
+            const endOfDay = new Date(endDate);
+            endOfDay.setHours(23, 59, 59, 999);
+            query.dateOfTreatment.$lte = endOfDay;
+          }
+        }
+
+        if (gradeLevel) {
+          query.gradeLevel = gradeLevel;
+        }
+
+        if (search) {
+          const searchRegex = new RegExp(search, 'i');
+          query.$or = [
+            { patientName: searchRegex },
+            { chiefComplaint: searchRegex },
+            { treatment: searchRegex },
+            { schoolId: searchRegex },
+            { dtrId: searchRegex }
+          ];
+        }
+        if (attendedBy) {
+          query.attendedBy = attendedBy;
+        }
+
+        let records;
+        if (schoolId) {
+          records = await DailyTreatmentRecord.aggregate([
+            { $match: query },
+            {
+              $lookup: {
+                from: 'students',
+                localField: 'student',
+                foreignField: '_id',
+                as: 'studentInfo'
+              }
+            },
+            {
+              $lookup: {
+                from: 'personnels',
+                localField: 'personnel',
+                foreignField: '_id',
+                as: 'personnelInfo'
+              }
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'attendedBy',
+                foreignField: '_id',
+                as: 'attendedByInfo'
+              }
+            },
+            {
+              $lookup: {
+                from: 'chief_complaints',
+                localField: 'chiefComplaint',
+                foreignField: '_id',
+                as: 'complaintInfo'
+              }
+            },
+            {
+              $addFields: {
+                recordSchoolId: {
+                  $cond: {
+                    if: { $gt: [{ $size: '$studentInfo' }, 0] },
+                    then: { $arrayElemAt: ['$studentInfo.schoolId', 0] },
+                    else: {
+                      $cond: {
+                        if: { $gt: [{ $size: '$personnelInfo' }, 0] },
+                        then: { $arrayElemAt: [{ $arrayElemAt: ['$personnelInfo.schoolId', 0] }, 0] },
+                        else: null
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              $match: {
+                recordSchoolId: schoolId
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                dtrId: 1,
+                patientName: 1,
+                dateOfTreatment: 1,
+                chiefComplaint: 1,
+                treatment: 1,
+                schoolId: 1,
+                gradeLevel: 1,
+                remarks: 1,
+                followUp: 1,
+                isDeleted: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                student: { $arrayElemAt: ['$studentInfo', 0] },
+                personnel: { $arrayElemAt: ['$personnelInfo', 0] },
+                attendedBy: { $arrayElemAt: ['$attendedByInfo', 0] }
+              }
+            },
+            { $sort: { dateOfTreatment: -1 } },
+            { $limit: parseInt(limit) }
+          ]);
+        } else {
+          records = await DailyTreatmentRecord.find(query)
+            .populate([
+              { path: 'student', select: 'firstName lastName stdId schoolName gradeLevel schoolId' },
+              { path: 'personnel', select: 'firstName lastName perId position schoolDistrictDivision schoolId' },
+              { path: 'attendedBy', select: 'firstName lastName role' }
+            ])
+            .sort({ dateOfTreatment: -1 })
+            .limit(parseInt(limit))
+            .lean();
+        }
+        return records;
+      },
+      CACHE_TTL.MEDIUM
+    );
+
+    if (hit) {
+      logger.info(`Cache hit: ${cacheKey}`);
     }
+    return data;
 
     const { startDate, endDate, gradeLevel, search, limit = 50, attendedBy, schoolId } = filters;
 
@@ -152,9 +281,6 @@ class DailyTreatmentService {
         .limit(parseInt(limit))
         .lean();
     }
-
-    await cache.set(cacheKey, records, CACHE_TTL.MEDIUM);
-    return records;
   }
 
   async getRecordById(id) {
@@ -251,27 +377,25 @@ class DailyTreatmentService {
 
   async getDailyCount() {
     const cacheKey = CACHE_KEYS.DAILY_TREATMENT.DAILY_COUNT;
-
-    const cached = await cache.get(cacheKey);
-    if (cached !== null) return cached;
-
-    const today = new Date();
-    const startOfToday = new Date(today);
-    startOfToday.setHours(0, 0, 0, 0);
-
-    const endOfToday = new Date(today);
-    endOfToday.setHours(23, 59, 59, 999);
-
-    const count = await DailyTreatmentRecord.countDocuments({
-      dateOfTreatment: {
-        $gte: startOfToday,
-        $lte: endOfToday
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const today = new Date();
+        const startOfToday = new Date(today);
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date(today);
+        endOfToday.setHours(23, 59, 59, 999);
+        return await DailyTreatmentRecord.countDocuments({
+          dateOfTreatment: {
+            $gte: startOfToday,
+            $lte: endOfToday
+          },
+          isDeleted: false
+        });
       },
-      isDeleted: false
-    });
-
-    await cache.set(cacheKey, count, CACHE_TTL.SHORT);
-    return count;
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async getDashboardStats(filters = {}) {

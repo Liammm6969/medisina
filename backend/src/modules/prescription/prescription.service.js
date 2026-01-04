@@ -52,25 +52,21 @@ class PrescriptionService {
 
   async getPrescriptionById(prescriptionId) {
     const cacheKey = CACHE_KEYS.PRESCRIPTION.BY_ID(prescriptionId);
-
-    try {
-      const cached = await cache.get(cacheKey);
-      if (cached) return cached;
-    } catch (error) {
-      logger.warn('Cache get failed', error);
-    }
-
-    const prescription = await Prescription.findOne({ prescriptionId, isDeleted: false })
-      .populate('prescribedBy', 'firstName lastName role')
-      .populate('attendingExaminer', 'firstName lastName role')
-      .lean();
-
-    if (!prescription) {
-      throw new ApiError('Prescription not found', StatusCodes.NOT_FOUND);
-    }
-
-    await cache.set(cacheKey, prescription, CACHE_TTL.MEDIUM);
-    return prescription;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => {
+        const prescription = await Prescription.findOne({ prescriptionId, isDeleted: false })
+          .populate('prescribedBy', 'firstName lastName role')
+          .populate('attendingExaminer', 'firstName lastName role')
+          .lean();
+        if (!prescription) {
+          throw new ApiError('Prescription not found', StatusCodes.NOT_FOUND);
+        }
+        return prescription;
+      },
+      CACHE_TTL.MEDIUM
+    );
+    return data;
   }
   async getAllPrescriptionsByUser(filters = {}) {
     const { patientName, startDate, endDate, attendingExaminer, limit = 50, page = 1 } = filters;

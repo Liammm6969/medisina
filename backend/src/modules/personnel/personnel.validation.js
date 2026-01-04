@@ -20,11 +20,10 @@ export const createPersonnelSchema = Joi.object({
     "array.base": "School ID must be an array.",
     "string.max": "Each School ID must be at most 20 characters.",
   }),
-  schoolName: Joi.array().items(Joi.string().trim().max(50)).optional().messages({
+  schoolName: Joi.array().items(Joi.string().trim()).optional().messages({
     "array.base": "School Name must be an array.",
-    "string.max": "Each School Name must be at most 50 characters.",
   }),
-  schoolDistrictDivision: Joi.array().items(Joi.string().trim().max(150)).allow(null, "").optional(),
+  schoolDistrictDivision: Joi.array().items(Joi.string().trim()).allow(null, "").optional(),
 
   yearsInService: Joi.number().integer().min(0).max(99).allow(null),
   firstYearInService: Joi.number().integer().min(1900).max(new Date().getFullYear()).allow(null),
@@ -48,9 +47,8 @@ export const updatePersonnelSchema = Joi.object({
     "array.base": "School ID must be an array.",
     "string.max": "Each School ID must be at most 20 characters.",
   }),
-  schoolName: Joi.array().items(Joi.string().trim().max(50)).optional().messages({
+  schoolName: Joi.array().items(Joi.string().trim()).optional().messages({
     "array.base": "School Name must be an array.",
-    "string.max": "Each School Name must be at most 50 characters.",
   }),
   yearsInService: Joi.number().integer().min(0).max(90).allow(null),
   firstYearInService: Joi.number().integer().min(1900).max(new Date().getFullYear()).allow(null),

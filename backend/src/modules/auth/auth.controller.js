@@ -126,7 +126,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   if (!email) throw new ApiError('Email is required', StatusCodes.BAD_REQUEST)
 
-  const { email: _, ...updateData } = req.body
+  const {...updateData } = req.body
 
   const user = await authService.updateUser(email, updateData)
 

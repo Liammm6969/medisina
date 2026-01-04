@@ -60,34 +60,30 @@ class NotificationService {
 
   async getMyNotifications(recipientId) {
     const cacheKey = CACHE_KEYS.NOTIFICATION.MY(recipientId);
-
-    const cached = await cache.get(cacheKey);
-    if (cached) return cached;
-
-    const notifications = await Notification
-      .find({ recipientId, status: NOTIFICATION_STATUS.UNREAD })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    await cache.set(cacheKey, notifications, CACHE_TTL.SHORT);
-    return notifications;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => await Notification
+        .find({ recipientId, status: NOTIFICATION_STATUS.UNREAD })
+        .sort({ createdAt: -1 })
+        .lean(),
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async getAllNotifications() {
     const cacheKey = CACHE_KEYS.NOTIFICATION.ALL;
-
-    const cached = await cache.get(cacheKey);
-    if (cached) return cached;
-
-    const notifications = await Notification
-      .find({
-        status: { $in: [NOTIFICATION_STATUS.UNREAD, NOTIFICATION_STATUS.READ] }
-      })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    await cache.set(cacheKey, notifications, CACHE_TTL.SHORT);
-    return notifications;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => await Notification
+        .find({
+          status: { $in: [NOTIFICATION_STATUS.UNREAD, NOTIFICATION_STATUS.READ] }
+        })
+        .sort({ createdAt: -1 })
+        .lean(),
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async getNotificationById(id) {
@@ -151,13 +147,12 @@ class NotificationService {
 
   async getUnreadCount(recipientId) {
     const cacheKey = CACHE_KEYS.NOTIFICATION.UNREAD_COUNT(recipientId);
-
-    const cached = await cache.get(cacheKey);
-    if (cached !== null) return cached;
-
-    const count = await Notification.countUnreadByUser(recipientId);
-    await cache.set(cacheKey, count, CACHE_TTL.SHORT);
-    return count;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => await Notification.countUnreadByUser(recipientId),
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async getDoctorActivityNotifications(filters = {}) {

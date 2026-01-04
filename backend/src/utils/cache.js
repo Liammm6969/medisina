@@ -50,6 +50,16 @@ class RedisCache {
     }
   }
 
+  async getOrSet(key, fetchFn, ttl = this.defaultTTL) {
+    const cached = await this.get(key);
+    if (cached !== null) {
+      return { data: cached, hit: true };
+    }
+    const freshData = await fetchFn();
+    await this.set(key, freshData, ttl);
+    return { data: freshData, hit: false };
+  }
+
   async del(key) {
     if (!this.isConnected || !this.client) return false;
     try {

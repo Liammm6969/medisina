@@ -287,14 +287,12 @@ class StudentService {
   }
   async getStudentCount() {
     const cacheKey = CACHE_KEYS.STUDENT.COUNT;
-
-    const cached = await cache.get(cacheKey);
-    if (cached !== null) return cached;
-
-    const count = await StudentModel.countDocuments({ isDeleted: false });
-
-    await cache.set(cacheKey, count, CACHE_TTL.SHORT);
-    return count;
+    const { data } = await cache.getOrSet(
+      cacheKey,
+      async () => await StudentModel.countDocuments({ isDeleted: false }),
+      CACHE_TTL.SHORT
+    );
+    return data;
   }
 
   async getStudentsBySection(gradeLevel, section) {
