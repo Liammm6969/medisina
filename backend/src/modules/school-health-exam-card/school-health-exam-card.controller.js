@@ -206,7 +206,6 @@ export const getDSSSummary = asyncHandler(async (req, res) => {
   const detailedAnalysis = SchoolHealthExaminationService.analyzeCommonFindings(records);
   const priorityAreas = SchoolHealthExaminationService.identifyPriorityAreas(detailedAnalysis.commonFindings);
   const recommendations = SchoolHealthExaminationService.generateSchoolRecommendations(detailedAnalysis);
-  console.log(records);
   return res.status(StatusCodes.OK).json({
     data: {
       summary,
