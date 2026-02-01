@@ -776,12 +776,18 @@ class AnnualAccomplishmentReportService {
           if (examDate) {
             const examDateObj = new Date(examDate);
             if (examDateObj >= startDate && examDateObj <= endDate) {
-              if (exam.findings?.deworming) {
-                const studentId = card.student._id.toString();
+              const studentId = card.student._id.toString();
+              if (exam.findings?.deworming?.firstRound) {
                 if (!dewormingDates.has(studentId)) {
-                  dewormingDates.set(studentId, []);
+                  dewormingDates.set(studentId, { firstRound: false, secondRound: false });
                 }
-                dewormingDates.get(studentId).push(examDateObj);
+                dewormingDates.get(studentId).firstRound = true;
+              }
+              if (exam.findings?.deworming?.secondRound) {
+                if (!dewormingDates.has(studentId)) {
+                  dewormingDates.set(studentId, { firstRound: false, secondRound: false });
+                }
+                dewormingDates.get(studentId).secondRound = true;
               }
 
               if (exam.findings?.ironSupplementation) {
@@ -797,10 +803,9 @@ class AnnualAccomplishmentReportService {
       }
     });
 
-    dewormingDates.forEach(dates => {
-      const sortedDates = dates.sort((a, b) => a - b);
-      if (sortedDates.length >= 1) statistics.deworming.firstRound++;
-      if (sortedDates.length >= 2) statistics.deworming.secondRound++;
+    dewormingDates.forEach(data => {
+      if (data.firstRound) statistics.deworming.firstRound++;
+      if (data.secondRound) statistics.deworming.secondRound++;
     });
 
     return {

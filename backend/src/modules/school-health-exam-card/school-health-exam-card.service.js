@@ -680,13 +680,22 @@ class SchoolHealthExaminationService {
       switch (category) {
         case 'notDewormed':
           filteredStudents = analysis.reports.filter(report => {
-            if (!report || !Array.isArray(report.preventiveCare)) return false;
-            return report.preventiveCare.some(item =>
-              item.flag && (
-                item.flag.toLowerCase().includes('deworming') ||
-                item.flag.toLowerCase().includes('deworm')
-              )
-            );
+            if (!report) return false;
+            return !report.dewormingFirstRound && !report.dewormingSecondRound;
+          });
+          break;
+
+        case 'notDewormedFirstRound':
+          filteredStudents = analysis.reports.filter(report => {
+            if (!report) return false;
+            return !report.dewormingFirstRound;
+          });
+          break;
+
+        case 'notDewormedSecondRound':
+          filteredStudents = analysis.reports.filter(report => {
+            if (!report) return false;
+            return !report.dewormingSecondRound;
           });
           break;
 
@@ -1401,7 +1410,6 @@ class SchoolHealthExaminationService {
       }
 
       const findingsAnalysis = this.analyzeCommonFindings(schoolRecords, filters);
-
       const recommendations = this.generateSchoolRecommendations(findingsAnalysis);
 
       return {
@@ -1579,7 +1587,7 @@ class SchoolHealthExaminationService {
 
         // All preventive care facts
         immunization: findings.immunization?.toLowerCase().includes('complete') ? 'Complete' : '',
-        deworming: !!findings.deworming,
+        deworming: !!(findings.deworming?.firstRound || findings.deworming?.secondRound),
         ironSupplementation: !!findings.ironSupplementation,
 
         // Risk stratification facts
@@ -1961,7 +1969,8 @@ class SchoolHealthExaminationService {
     const records = await SchoolHealthExamination.find({ isDeleted: false }).lean();
 
     let totalExaminations = 0;
-    let dewormingCount = 0;
+    let dewormingFirstRoundCount = 0;
+    let dewormingSecondRoundCount = 0;
     let ironSupplementationCount = 0;
     let immunizationCount = 0;
 
@@ -1974,7 +1983,8 @@ class SchoolHealthExaminationService {
             const examinerId = exam.examiner && exam.examiner._id ? String(exam.examiner._id) : String(exam.examiner);
             if (!userId || examinerId === String(userId)) {
               totalExaminations++;
-              if (findings.deworming === true) dewormingCount++;
+              if (findings.deworming?.firstRound) dewormingFirstRoundCount++;
+              if (findings.deworming?.secondRound) dewormingSecondRoundCount++;
               if (findings.ironSupplementation === true) ironSupplementationCount++;
               if (findings.immunization && findings.immunization !== '') immunizationCount++;
             }
@@ -1987,7 +1997,10 @@ class SchoolHealthExaminationService {
     const calculateCoverage = (count) => totalExaminations > 0 ? Math.round((count / totalExaminations) * 100) : 0;
 
     const result = {
-      dewormingCoverage: calculateCoverage(dewormingCount),
+      dewormingCoverage: {
+        firstRound: calculateCoverage(dewormingFirstRoundCount),
+        secondRound: calculateCoverage(dewormingSecondRoundCount)
+      },
       ironSupplementationCoverage: calculateCoverage(ironSupplementationCount),
       immunizationCoverage: calculateCoverage(immunizationCount),
       totalStudents: totalExaminations

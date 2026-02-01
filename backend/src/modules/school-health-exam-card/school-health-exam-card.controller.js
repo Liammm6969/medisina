@@ -199,9 +199,8 @@ export const getDSSSummary = asyncHandler(async (req, res) => {
 
 
   const { summary, insights } = await SchoolHealthExaminationService.getDSSSummary(userContext, schoolId);
-
+  console.log(summary);
   const records = await SchoolHealthExaminationService._getSchoolRecordsForAnalysis(schoolId, userContext);
-
 
   const detailedAnalysis = SchoolHealthExaminationService.analyzeCommonFindings(records);
   const priorityAreas = SchoolHealthExaminationService.identifyPriorityAreas(detailedAnalysis.commonFindings);
@@ -248,7 +247,7 @@ export const getStudentsByCategory = asyncHandler(async (req, res) => {
     userContext.associatedSchools = 'district';
   }
 
-  const validCategories = ['notDewormed', 'immunizationIncomplete', 'visionIssues', 'hearingIssues', 'pendingApproval'];
+  const validCategories = ['notDewormed', 'notDewormedFirstRound', 'notDewormedSecondRound', 'immunizationIncomplete', 'visionIssues', 'hearingIssues', 'pendingApproval'];
 
   if (!validCategories.includes(category)) {
     throw new ApiError(`Invalid category. Valid categories are: ${validCategories.join(', ')}`, StatusCodes.BAD_REQUEST);
@@ -990,7 +989,9 @@ export const exportHealthRecord = asyncHandler(async (req, res) => {
     }
 
     if (findings.deworming !== undefined) {
-      sheet.getCell(`${column}${dataStartRow + 16}`).value = findings.deworming ? 'Yes' : 'No';
+      const firstRound = findings.deworming?.firstRound ? 'Yes' : 'No';
+      const secondRound = findings.deworming?.secondRound ? 'Yes' : 'No';
+      sheet.getCell(`${column}${dataStartRow + 16}`).value = `1st: ${firstRound}, 2nd: ${secondRound}`;
     }
 
     if (findings.immunization) {

@@ -173,9 +173,9 @@ class SchoolHealthDSSService {
       deformities: findings.deformities,
       tonsils: (findings.mouthThroatNeck === 'Enlarged tonsils') ? 'Enlarged' : 'Normal',
       immunization: findings.immunization?.toLowerCase().includes('incomplete') ? 'Incomplete' : 'Complete',
-      deworming: !!(findings.deworming?.firstRound || findings.deworming?.secondRound || findings.deworming),
-      dewormingFirstRound: !!(findings.deworming?.firstRound || findings.deworming),
-      dewormingSecondRound: !!(findings.deworming?.secondRound),
+      deworming: !!(findings.deworming?.firstRound || findings.deworming?.secondRound),
+      dewormingFirstRound: !!findings.deworming?.firstRound,
+      dewormingSecondRound: !!findings.deworming?.secondRound,
       ironSupplementation: !!findings.ironSupplementation
     };
 
@@ -221,7 +221,9 @@ class SchoolHealthDSSService {
       preventiveCare,
       riskLevel,
       isApproved: studentExamData.isApproved,
-      remarks: studentExamData.remarks
+      remarks: studentExamData.remarks,
+      dewormingFirstRound: studentExamData.dewormingFirstRound,
+      dewormingSecondRound: studentExamData.dewormingSecondRound
     };
   }
 
@@ -277,7 +279,7 @@ class SchoolHealthDSSService {
   async analyzeVisionHearing(data) {
     try {
       const sanitizedFacts = this.sanitizeFacts(data || {});
-    
+
       const results = await this.engines.visionHearing.run(sanitizedFacts);
       const flags = results.events.map(event => ({
         flag: event.params.flag,
@@ -349,6 +351,8 @@ class SchoolHealthDSSService {
       visionIssues: 0,
       hearingIssues: 0,
       notDewormed: 0,
+      notDewormedFirstRound: 0,
+      notDewormedSecondRound: 0,
       immunizationIncomplete: 0,
       pendingApproval: 0,
       approved: 0,
@@ -397,6 +401,8 @@ class SchoolHealthDSSService {
       if (data.vision === 'Failed') summary.visionIssues++;
       if (data.auditoryScreening === 'Failed') summary.hearingIssues++;
       if (!data.deworming) summary.notDewormed++;
+      if (!data.dewormingFirstRound) summary.notDewormedFirstRound++;
+      if (!data.dewormingSecondRound) summary.notDewormedSecondRound++;
       if (!data.immunization || data.immunization === 'Incomplete') summary.immunizationIncomplete++;
 
       if (data.isApproved === true) {
@@ -432,6 +438,8 @@ class SchoolHealthDSSService {
     summary.visionIssuesPercent = Math.round((summary.visionIssues / summary.total) * 100);
     summary.hearingIssuesPercent = Math.round((summary.hearingIssues / summary.total) * 100);
     summary.notDewormedPercent = Math.round((summary.notDewormed / summary.total) * 100);
+    summary.notDewormedFirstRoundPercent = Math.round((summary.notDewormedFirstRound / summary.total) * 100);
+    summary.notDewormedSecondRoundPercent = Math.round((summary.notDewormedSecondRound / summary.total) * 100);
     summary.immunizationIncompletePercent = Math.round((summary.immunizationIncomplete / summary.total) * 100);
     summary.pendingApprovalPercent = Math.round((summary.pendingApproval / summary.total) * 100);
     summary.approvedPercent = Math.round((summary.approved / summary.total) * 100);
