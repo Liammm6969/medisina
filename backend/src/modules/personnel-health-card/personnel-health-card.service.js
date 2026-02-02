@@ -110,10 +110,8 @@ class PersonnelHealthCardService {
     const personnelQuery = { isDeleted: false };
     if (associatedSchools && Array.isArray(associatedSchools) && associatedSchools.length > 0) {
       personnelQuery.schoolId = { $in: associatedSchools };
-    } else if (associatedSchools && typeof associatedSchools === 'string') {
-      personnelQuery.schoolId = associatedSchools;
-    }
-
+    } 
+  
     const personnelList = await Personnel.find(personnelQuery).lean();
     const personnelIds = personnelList.map(p => p._id);
     const personnelMap = Object.fromEntries(personnelList.map(p => [p._id.toString(), p]));
